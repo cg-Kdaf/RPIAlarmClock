@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import json
 import urllib.request
 import datetime
@@ -51,7 +51,7 @@ def get_weather_data():
             date = "Tomor"
         else:
             date = f"{int(date_1[2]):02d}{month[int(date_1[1])-1]}"
-        date += f";{int(date_2[0]):02d}h"
+        date += f"{int(date_2[0]):02d}h"
         index = item["weather"][0]["id"]
         percentage = 0
         for id_range in id_ranges:
