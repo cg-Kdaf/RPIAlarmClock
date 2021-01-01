@@ -34,28 +34,28 @@ def draw_time(image):
     image.text((time_w[1]+(layout_w[1]-time_w[1]-text_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0)
 
 def draw_weather(image):
-    ranges = ((0,7),(8,13),(14,19))
-    
-    image.text((340,0), "Time", font = font_medium , fill = 0)
-    image.text((500,0), "Temp", font = font_medium , fill = 0)
-    image.text((620,0), "Trending", font = font_medium , fill = 0)
-    image.rectangle((324, 31, 800, 33), fill = 0)
-    days = {}
-    for data in get_weather_data():
-        day_part_suffix = ""
-        for index, day_part in enumerate(ranges):
-            if data[5] in day_part:
-                day_part_suffix = str(index)
-                break
-        day_part_name = data[0] + day_part_suffix
-        if day_part_name not in days.keys():
-            days[day_part_name] = []
-        days[day_part_name].append([data[1],data[2],data[3]])
+    average_main_props = ("feels_like","temp","temp_min","temp_max")
+    start_day = datetime(2000,1,1,7)
+    mid_day = datetime(2000,1,1,12,30)
+    end_day = datetime(2000,1,1,20)
+    weather_data = {}
     for index, data in enumerate(get_weather_data()):
-        image.text((340,(index+1)*32), str(data[0]), font = font_medium, fill = 0) # Time
-        image.text((500,(index+1)*32), f"{data[2]:4.1f}°C", font = font_medium , fill = 0) # Temp
-        image.text((600,(index+1)*32), chr(data[3]), font = font_weather, fill = 0) # Icon
-        image.text((620,(index+1)*32), str(data[1]), font = font_medium, fill = 0) # Trending
+        time_datetime = datetime.strptime(data["dt_txt"],'%Y-%m-%d %H:%M:%S')
+        date_str = str(time_datetime.date())
+        suffix_str = ("Morning" if time_datetime.time() < mid_day.time() else "Afternoon")
+        if time_datetime.time() > end_day.time() or time_datetime.time() < start_day.time():
+            continue
+        if date_str not in weather_data.keys():
+            weather_data[date_str] = {}
+        if suffix_str not in weather_data[date_str].keys():
+            weather_data[date_str][suffix_str] = data
+        else:
+            for prop in average_main_props:
+                weather_data[date_str][suffix_str]["main"][prop] += data["main"][prop]
+                weather_data[date_str][suffix_str]["main"][prop] *= 0.5
+    for index_day, day in enumerate(weather_data):
+        for index_part, part in enumerate(day):
+            image.text((20*index_part,350+20*index), part["main"]["temp"], font = font_time_s, fill = 0)
 
 
 # Init display

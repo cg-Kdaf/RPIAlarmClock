@@ -40,37 +40,28 @@ def get_weather_data():
         print("error searching weather data from : "+url_openweathermap);
         exit(1)
     
-    today = datetime.datetime.now().day
-    tommorow = (datetime.datetime.now()+datetime.timedelta(days=1)).day
-
-    
-    weather_data=[]
-    for item in infos["list"]:
-        date_1 = str(item["dt_txt"]).split(" ")[0].split("-")
-        date_2 = str(item["dt_txt"]).split(" ")[1].split(":")
-        if int(date_1[2]) == today:
-            date = "Today"
-        elif int(date_1[2]) == tommorow:
-            date = "Tomor"
-        else:
-            date = f"{int(date_1[2]):02d}{month[int(date_1[1])-1]}"
-        date += f"{int(date_2[0]):02d}h"
-        index = item["weather"][0]["id"]
-        percentage = 0
-        for id_range in id_ranges:
-            if index in range(id_range[0],id_range[1]):
-                percentage = (index-id_range[0])/(id_range[1]-id_range[0])*100
-                continue
-        main = item["weather"][0]["main"]
-        main += f" {int(percentage):2d}%"
-        temperature = item["main"]["temp"]
+    #weather_data=[]
+    #for item in infos["list"]:
+        #time_raw = item["dt_txt"]).split(" ")
+        #time_time = time[0].split("-")
+        #time_date = time[1].split(":")
         
-        icon = icon_correspondance[str(item["weather"][0]["icon"][0:2])]
+        #index = item["weather"][0]["id"]
+        #percentage = 0
+        #for id_range in id_ranges:
+            #if index in range(id_range[0],id_range[1]):
+                #percentage = (index-id_range[0])/(id_range[1]-id_range[0])*100
+                #continue
+        #main = item["weather"][0]["main"]
+        #main += f" {int(percentage):2d}%"
+        #temperature = item["main"]["temp"]
+        
+        #icon = icon_correspondance[str(item["weather"][0]["icon"][0:2])]
         #if item["weather"][0]["icon"][2] == "n":
             #icon += 10
-        daynight = item["weather"][0]["icon"][2]
+        #daynight = item["weather"][0]["icon"][2]
         
-        # humidity = item["main"]["humidity"]
-        # pressure = item["main"]["pressure"]
-        weather_data.append((date,main,temperature,icon,daynight,date_2[0]))
-    return weather_data
+        #humidity = item["main"]["humidity"]
+        #pressure = item["main"]["pressure"]
+        #weather_data.append((date,main,temperature,icon,daynight,date_2[0]))
+    return infos["list"]
