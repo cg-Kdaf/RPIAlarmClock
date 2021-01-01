@@ -14,8 +14,21 @@ font_medium = ImageFont.truetype('data/Teko/Teko-Light.ttf', 32)
 font_weather = ImageFont.truetype('data/weather_font.ttf', 40)
 font_time_l = ImageFont.truetype('data/Orbitron/static/Orbitron-Regular.ttf', 64)
 font_time_s = ImageFont.truetype('data/Orbitron/static/Orbitron-SemiBold.ttf', 24)
+font_time_xs = ImageFont.truetype('data/Teko/Teko-Light.ttf', 20)
 
 # Datas --
+
+def draw_text_angle(image, image_g, position_, text_, font_, fill_, angle_):
+    """(image, position_, text_, font_, fill_, angle_)"""
+    text_w, text_h = image.textsize(text_, font=font_)
+    txt=Image.new('1', (text_w,text_h), 255)
+    d = ImageDraw.Draw(txt)
+    d.text((0,0), text_,  font=font_, fill=fill_)
+    txt_=txt.rotate(angle_,  expand=True)
+
+    image_g.paste(txt_, box = position_)
+    #image_g.paste(txt, box = position_)
+
 
 def draw_time(image):
     layout_w = (0,330)
@@ -23,7 +36,7 @@ def draw_time(image):
     time_w = (layout_w[0],layout_w[0]+225)
 
     image.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0) # Separator bottom
-    image.rectangle((layout_w[1], layout_h[0], layout_w[1]+4, epd.height), fill = 0) # Separator right
+    image.rectangle((layout_w[1], layout_h[0], layout_w[1]+1, layout_h[1]+4), fill = 0) # Separator right
 
     now=datetime.now()
     time_text = now.strftime("%k:%M") # Time as 10:03 or 3:50
@@ -33,7 +46,10 @@ def draw_time(image):
     text_w, text_h = image.textsize(date_text, font=font_time_s)
     image.text((time_w[1]+(layout_w[1]-time_w[1]-text_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0)
 
-def draw_weather(image):
+def draw_weather(image,Image_global):
+    layout_w = (330,800)
+    layout_h = (0,60)
+    
     average_main_props = ("feels_like","temp","temp_min","temp_max")
     start_day = datetime(2000,1,1,7)
     mid_day = datetime(2000,1,1,12,30)
@@ -54,8 +70,13 @@ def draw_weather(image):
                 weather_data[date_str][suffix_str]["main"][prop] += data["main"][prop]
                 weather_data[date_str][suffix_str]["main"][prop] *= 0.5
     for index_day, day in enumerate(weather_data):
-        for index_part, part in enumerate(day):
-            image.text((20*index_part,350+20*index), part["main"]["temp"], font = font_time_s, fill = 0)
+        parts = list(weather_data[day].keys())
+        draw_text_angle(image, Image_global, (60*index_day,300), day, font_medium, 0, 90)
+        if len(parts) == 1:
+            image.text((350+80*index_day,10), f'{weather_data[day][parts[0]]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
+        else:
+            image.text((350+80*index_day,20*0), f'{weather_data[day][parts[0]]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
+            image.text((350+80*index_day,20*1), f'{weather_data[day][parts[1]]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
 
 
 # Init display
@@ -66,7 +87,7 @@ draw = ImageDraw.Draw(Himage)
 
 print("...\nComputing image")
 draw_time(draw)
-draw_weather(draw)
+draw_weather(draw,Himage)
 
 
 print("...\nDrawing image")
