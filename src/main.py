@@ -21,9 +21,9 @@ try:
     epd.init()
     epd.Clear()
 
-    font_large = ImageFont.truetype('../data/Font.ttc', 128)
-    font_medium = ImageFont.truetype('../data/Font.ttc', 32)
-    font_weather = ImageFont.truetype('../data/weather_font.ttf', 40)
+    font_large = ImageFont.truetype('data/Font.ttc', 128)
+    font_medium = ImageFont.truetype('data/Font.ttc', 32)
+    font_weather = ImageFont.truetype('data/weather_font.ttf', 40)
 
     # Drawing on the Horizontal image
     print("...\nDisplaying time")
