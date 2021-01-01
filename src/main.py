@@ -4,7 +4,7 @@ import epd7in5_V2
 from PIL import Image,ImageDraw,ImageFont
 from datetime import datetime
 
-from weather import get_weather_data
+from weather import get_weather_data, weather_intensity, icon_correspondance
 
 # -- Datas
 
@@ -14,7 +14,8 @@ font_medium = ImageFont.truetype('data/Teko/Teko-Light.ttf', 32)
 font_weather = ImageFont.truetype('data/weather_font.ttf', 40)
 font_time_l = ImageFont.truetype('data/Orbitron/static/Orbitron-Regular.ttf', 64)
 font_time_s = ImageFont.truetype('data/Orbitron/static/Orbitron-SemiBold.ttf', 24)
-font_time_xs = ImageFont.truetype('data/Teko/Teko-Light.ttf', 20)
+font_time_xs = ImageFont.truetype('data/Teko/Teko-Light.ttf', 26)
+font_time_xs_bold = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 24)
 
 # Datas --
 
@@ -36,7 +37,7 @@ def draw_time(image):
     time_w = (layout_w[0],layout_w[0]+225)
 
     image.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0) # Separator bottom
-    image.rectangle((layout_w[1], layout_h[0], layout_w[1]+1, layout_h[1]+4), fill = 0) # Separator right
+    image.rectangle((layout_w[1], layout_h[0], layout_w[1]+2, layout_h[1]+4), fill = 0) # Separator right
 
     now=datetime.now()
     time_text = now.strftime("%k:%M") # Time as 10:03 or 3:50
@@ -47,8 +48,11 @@ def draw_time(image):
     image.text((time_w[1]+(layout_w[1]-time_w[1]-text_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0)
 
 def draw_weather(image,Image_global):
+    now=datetime.now()
     layout_w = (330,800)
     layout_h = (0,60)
+    
+    image.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0) # Separator bottom
     
     average_main_props = ("feels_like","temp","temp_min","temp_max")
     start_day = datetime(2000,1,1,7)
@@ -70,14 +74,14 @@ def draw_weather(image,Image_global):
                 weather_data[date_str][suffix_str]["main"][prop] += data["main"][prop]
                 weather_data[date_str][suffix_str]["main"][prop] *= 0.5
     for index_day, day in enumerate(weather_data):
+        pos_x = layout_w[0]+85*index_day
         parts = list(weather_data[day].keys())
-        draw_text_angle(image, Image_global, (60*index_day,300), day, font_medium, 0, 90)
-        if len(parts) == 1:
-            image.text((350+80*index_day,10), f'{weather_data[day][parts[0]]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
-        else:
-            image.text((350+80*index_day,20*0), f'{weather_data[day][parts[0]]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
-            image.text((350+80*index_day,20*1), f'{weather_data[day][parts[1]]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
-
+        date = datetime.strptime(day,'%Y-%m-%d')
+        date_text = ("Today" if now.date() == date.date() else date.strftime('%A'))
+        draw_text_angle(image, Image_global, (pos_x+4,0), date_text, font_time_xs_bold, 0, 90)
+        for index_part, part in enumerate(parts):
+            pos_y = (15 if len(parts) == 1 else index_part*30)
+            image.text((pos_x + 30, pos_y), f'{weather_data[day][part]["main"]["temp"]:4.1f}°C', font = font_time_xs, fill = 0)
 
 # Init display
 epd = epd7in5_V2.EPD()

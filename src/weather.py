@@ -22,6 +22,12 @@ icon_correspondance = {
     "13": 106,
     "50": 98
 }
+
+def weather_intensity(weather_index):
+    for id_range in id_ranges:
+        if index in range(id_range[0],id_range[1]):
+            return (index-id_range[0])/(id_range[1]-id_range[0])*100
+
 # Icon correspondance between openweathermap (https://openweathermap.org/weather-conditions)
 # and the ascii caracter of the font (https://www.dafont.com/weather.font)
 
