@@ -27,11 +27,11 @@ icon_correspondance = {
 
 
 def get_weather_data():
-    # Construction de l'url OpenWeatherMap
+    # OpenWeatherMap url
     url_openweathermap  = openweathermap + '?id=' + city1_id + '&units=' + unit + '&APPID=' + APPID
 
     try:
-        # Récupération des prévisions météo et décodage JSON
+        # Getting the weather data and extracting JSON
         webURL = urllib.request.urlopen(url_openweathermap)
         data = webURL.read()
         encoding = webURL.info().get_content_charset('utf-8')
@@ -39,15 +39,18 @@ def get_weather_data():
     except:
         print("error searching weather data from : "+url_openweathermap);
         exit(1)
+    
+    today = datetime.datetime.now().day
+    tommorow = (datetime.datetime.now()+datetime.timedelta(days=1)).day
 
     
     weather_data=[]
     for item in infos["list"]:
         date_1 = str(item["dt_txt"]).split(" ")[0].split("-")
         date_2 = str(item["dt_txt"]).split(" ")[1].split(":")
-        if int(date_1[2]) == datetime.datetime.now().day:
+        if int(date_1[2]) == today:
             date = "Today"
-        elif int(date_1[2]) == (datetime.datetime.now()+datetime.timedelta(days=1)).day:
+        elif int(date_1[2]) == tommorow:
             date = "Tomor"
         else:
             date = f"{int(date_1[2]):02d}{month[int(date_1[1])-1]}"
@@ -69,5 +72,5 @@ def get_weather_data():
         
         # humidity = item["main"]["humidity"]
         # pressure = item["main"]["pressure"]
-        weather_data.append((date,main,temperature,icon,daynight))
+        weather_data.append((date,main,temperature,icon,daynight,date_2[0]))
     return weather_data
