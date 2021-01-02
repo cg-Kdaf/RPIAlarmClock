@@ -20,6 +20,18 @@ font_time_xs_bold = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 24)
 
 # Datas --
 
+def cut_text_to_length(image, text_, font_, length, min_char_length):
+    char_length_end = min_char_length
+    actual_length = 0
+    
+    while actual_length < length:
+        if char_length_end > len(text_):
+            break
+        text_w, text_h = image.textsize(text_[:char_length_end], font=font_)
+        actual_length = text_w
+        char_length_end += 1
+    return text_[:char_length_end-1]
+
 def draw_text_angle(image, image_g, position_, text_, font_, fill_, angle_):
     """(image, position_, text_, font_, fill_, angle_)"""
     text_w, text_h = image.textsize(text_, font=font_)
@@ -76,21 +88,27 @@ def draw_weather(image,Image_global):
         draw_text_angle(image, Image_global, (pos_x+4,0), date_text, font_time_xs_bold, 0, 90)
         for index_part, prop in enumerate(["temp_min","temp_max"]):
             pos_y = index_part*30
-            image.text((pos_x + 30, pos_y), f'{weather_data[day]["main"][prop]:2.0f}°C', font = font_time_xs, fill = 0)
+            image.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°C', font = font_time_xs, fill = 0)
 
 def draw_calendar(image,Image_global):
     layout_w = (0,800)
     layout_h = (60,480)
-    events = get_calendars_sorted(calendars)[:10]
+    event_height = 30
+    events_number = int((layout_h[1] - layout_h[0]) / event_height)
+    events = get_calendars_sorted(calendars)[:events_number]
     drawn_dates = []
     for index, event in enumerate(events):
-        pos_y = layout_h[0] + 30 * index
+        pos_y = layout_h[0] + event_height * index
         time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ")
         if str(time_start.date()) not in drawn_dates:
             drawn_dates.append(str(time_start.date()))
-            image.text((0, pos_y), time_start.strftime("%a"), font = font_time_xs, fill = 0)
+            image.text((layout_w[0]+4, pos_y), time_start.strftime("%a"), font = font_time_xs, fill = 0)
+            image.rectangle((layout_w[0], int(pos_y + event_height/2), layout_w[0]+3, pos_y+event_height), fill = 0)
+            image.rectangle((layout_w[0], int(pos_y), layout_w[0] + 160, pos_y - 2), fill = 0)
         else:
-            image.text((0, pos_y), time_start.strftime("%H:%M"), font = font_time_xs, fill = 0)
+            image.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"), font = font_time_xs, fill = 0)
+            image.rectangle((layout_w[0], pos_y, layout_w[0]+3, pos_y+event_height), fill = 0)
+        image.text((layout_w[0]+60, pos_y), cut_text_to_length(draw,event["SUMMARY"], font_time_xs, 100, 6), font = font_time_xs, fill = 0)
 
 # Init display
 epd = epd7in5_V2.EPD()
