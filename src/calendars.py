@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 from requests import get as requests_get
 from arrow import now as arrow_now,get as arrow_get
-from datetime import datetime, timedelta
-import re
+#from datetime import datetime
+#import re
 
 calendars = [
     "https://api.ecoledirecte.com/v3/ical/E/6940/516d313257576c78646d45726348704d4e6e427a566e4656547a427459335a334d6974694d557052.ics",# School
