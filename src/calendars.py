@@ -87,3 +87,9 @@ def sort_events(events, attribute="DTSTART"):
 
 def get_calendar_sorted(url):
     return sort_events(get_event_from_text(get_calendar(url)))
+
+def get_calendars_sorted(urls):
+    events = []
+    for url in urls:
+        events += get_event_from_text(get_calendar(url))
+    return sort_events(events)

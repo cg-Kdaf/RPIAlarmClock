@@ -4,7 +4,7 @@ import epd7in5_V2
 from PIL import Image,ImageDraw,ImageFont
 from datetime import datetime
 
-from calendars import calendars, get_calendar, get_event_from_text, sort_events
+from calendars import calendars, get_calendars_sorted
 from weather import get_weather_data, weather_intensity, icon_correspondance
 
 # -- Datas
@@ -81,13 +81,13 @@ def draw_weather(image,Image_global):
 def draw_calendar(image,Image_global):
     layout_w = (0,800)
     layout_h = (60,480)
-    events = sort_events([get_event_from_text(get_calendar(cal)) for cal in calendars])[:10]
+    events = get_calendars_sorted(calendars)[:10]
     drawn_dates = []
     for index, event in enumerate(events):
         pos_y = layout_h[0] + 30 * index
         time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ")
-        if event["DTSTART"] not in drawn_dates:
-            drawn_dates.append(event["DTSTART"])
+        if str(time_start.date()) not in drawn_dates:
+            drawn_dates.append(str(time_start.date()))
             image.text((0, pos_y), time_start.strftime("%a"), font = font_time_xs, fill = 0)
         else:
             image.text((0, pos_y), time_start.strftime("%H:%M"), font = font_time_xs, fill = 0)
@@ -101,7 +101,7 @@ draw = ImageDraw.Draw(Himage)
 print("...\nComputing image")
 draw_time(draw,Himage)
 draw_weather(draw,Himage)
-
+draw_calendar(draw,Himage)
 
 print("...\nDrawing image")
 epd.display(epd.getbuffer(Himage))
