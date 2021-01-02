@@ -47,7 +47,7 @@ def draw_time(image):
     text_w, text_h = image.textsize(date_text, font=font_time_s)
     image.text((time_w[1]+(layout_w[1]-time_w[1]-text_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0)
 
-def draw_weather(image,Image_global):
+def draw_weather(image,Image_global): # TODO Draw the min/max temp of the day instead of medium of midday
     now=datetime.now()
     layout_w = (330,800)
     layout_h = (0,60)
@@ -77,7 +77,7 @@ def draw_weather(image,Image_global):
         pos_x = layout_w[0]+85*index_day
         parts = list(weather_data[day].keys())
         date = datetime.strptime(day,'%Y-%m-%d')
-        date_text = ("Today" if now.date() == date.date() else date.strftime('%A'))
+        date_text = ("Today" if now.date() == date.date() else date.strftime('%A')[:6])
         draw_text_angle(image, Image_global, (pos_x+4,0), date_text, font_time_xs_bold, 0, 90)
         for index_part, part in enumerate(parts):
             pos_y = (15 if len(parts) == 1 else index_part*30)

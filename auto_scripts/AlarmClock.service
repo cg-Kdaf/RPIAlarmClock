@@ -3,8 +3,8 @@ Description=My service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 -u main.py
-WorkingDirectory=/home/pi/AlarmClockProject/AlarmClock/src
+ExecStart=/usr/bin/python3 -u src/main.py
+WorkingDirectory=/home/pi/AlarmClockProject/AlarmClock
 StandardOutput=inherit
 StandardError=inherit
 Restart=on-failure
