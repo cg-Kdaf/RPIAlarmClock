@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 import epd7in5_V2
 from PIL import Image,ImageDraw,ImageFont
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from calendars import calendars, get_calendars_sorted
 from weather import get_weather_data, weather_intensity, icon_correspondance
@@ -54,10 +54,10 @@ def draw_time(image,Image_global):
     now=datetime.now()
     date_text = now.strftime("%A\n%d %b") # Date as Friday\n01 Jan
     text1_w, text1_h = image.textsize(date_text, font=font_time_s)
-    image.text((time_w[1]+(layout_w[1]-text1_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0) # Draw date
+    image.text((layout_w[1]-text1_w, layout_h[0]), date_text, font = font_time_s, fill = 0) # Draw date
     time_text = now.strftime("%k:%M") # Time as 14:03 or 3:50
     text2_w, text2_h = image.textsize(time_text, font=font_time_l)
-    image.text((time_w[0]+(layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font = font_time_l, fill = 0) # Draw time
+    image.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font = font_time_l, fill = 0) # Draw time
 
 def draw_weather(image,Image_global):
     now=datetime.now()
@@ -98,18 +98,21 @@ def draw_calendar(image,Image_global):
     drawn_dates = []
     for index, event in enumerate(events):
         pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
-        time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ")
+        if "Z" in event["DTSTART"]:
+            time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ") + timedelta(hours=1)
+        else:
+            time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ")
         if str(time_start.date()) not in drawn_dates:
             drawn_dates.append(str(time_start.date()))
             pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
             image.text((layout_w[0]+4, pos_y), time_start.strftime("%a"), font = font_time_xs, fill = 0) # Draw the date
             image.rectangle((layout_w[0], pos_y+15, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar small size
             if len(drawn_dates) != 1 : # Draw horizontal line only if not the first day
-                image.rectangle((layout_w[0], pos_y, layout_w[0] + 160, pos_y - 1), fill = 0) # draw the horizontal bar
+                image.rectangle((layout_w[0], pos_y - 2, layout_w[0] + 160, pos_y - 1), fill = 0) # draw the horizontal bar
         else:
             image.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"), font = font_time_xs, fill = 0) # draw the start time
             image.rectangle((layout_w[0], pos_y, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar entire size
-        image.text((layout_w[0]+60, pos_y), cut_text_to_length(draw,event["SUMMARY"], font_time_xs, 100, 6), font = font_time_xs, fill = 0)
+        image.text((layout_w[0]+60, pos_y), cut_text_to_length(draw,event["SUMMARY"], font_time_xs, 110, 6), font = font_time_xs, fill = 0)
 
 # Init display
 epd = epd7in5_V2.EPD()

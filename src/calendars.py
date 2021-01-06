@@ -92,4 +92,5 @@ def get_calendars_sorted(urls):
     events = []
     for url in urls:
         events += get_event_from_text(get_calendar(url))
-    return sort_events(events)
+    sorted_events = sort_events(events)
+    return sorted_events
