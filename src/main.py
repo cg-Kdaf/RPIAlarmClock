@@ -47,18 +47,17 @@ def draw_text_angle(image, image_g, position_, text_, font_, fill_, angle_):
 def draw_time(image,Image_global):
     layout_w = (0,330)
     layout_h = (0,60)
-    time_w = (layout_w[0],layout_w[0]+225)
 
     image.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0) # Separator bottom
     image.rectangle((layout_w[1], layout_h[0], layout_w[1]+2, layout_h[1]+4), fill = 0) # Separator right
 
     now=datetime.now()
-    time_text = now.strftime("%k:%M") # Time as 10:03 or 3:50
-    text_w, text_h = image.textsize(time_text, font=font_time_l)
-    image.text((time_w[0]+(time_w[1]-text_w)/2, layout_h[0]-15), time_text, font = font_time_l, fill = 0)
     date_text = now.strftime("%A\n%d %b") # Date as Friday\n01 Jan
-    text_w, text_h = image.textsize(date_text, font=font_time_s)
-    image.text((time_w[1]+(layout_w[1]-time_w[1]-text_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0)
+    text1_w, text1_h = image.textsize(date_text, font=font_time_s)
+    image.text((time_w[1]+(layout_w[1]-text1_w)/2, layout_h[0]), date_text, font = font_time_s, fill = 0) # Draw date
+    time_text = now.strftime("%k:%M") # Time as 14:03 or 3:50
+    text2_w, text2_h = image.textsize(time_text, font=font_time_l)
+    image.text((time_w[0]+(layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font = font_time_l, fill = 0) # Draw time
 
 def draw_weather(image,Image_global):
     now=datetime.now()
@@ -84,30 +83,32 @@ def draw_weather(image,Image_global):
     for index_day, day in enumerate(weather_data):
         pos_x = layout_w[0]+80*index_day
         date = datetime.strptime(day,'%Y-%m-%d')
-        date_text = ("Today" if now.date() == date.date() else date.strftime('%A')[:6])
+        date_text = ("Today" if now.date() == date.date() else cut_text_to_length(image, date.strftime('%A'), font_time_xs_bold, 55, 5))
         draw_text_angle(image, Image_global, (pos_x+4,0), date_text, font_time_xs_bold, 0, 90)
         for index_part, prop in enumerate(["temp_min","temp_max"]):
             pos_y = index_part*30
-            image.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°C', font = font_time_xs, fill = 0)
+            image.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°', font = font_time_xs, fill = 0)
 
 def draw_calendar(image,Image_global):
     layout_w = (0,800)
-    layout_h = (60,480)
+    layout_h = (62,480)
     event_height = 30
     events_number = int((layout_h[1] - layout_h[0]) / event_height)
     events = get_calendars_sorted(calendars)[:events_number]
     drawn_dates = []
     for index, event in enumerate(events):
-        pos_y = layout_h[0] + event_height * index
+        pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
         time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ")
         if str(time_start.date()) not in drawn_dates:
             drawn_dates.append(str(time_start.date()))
-            image.text((layout_w[0]+4, pos_y), time_start.strftime("%a"), font = font_time_xs, fill = 0)
-            image.rectangle((layout_w[0], int(pos_y + event_height/2), layout_w[0]+3, pos_y+event_height), fill = 0)
-            image.rectangle((layout_w[0], int(pos_y), layout_w[0] + 160, pos_y - 2), fill = 0)
+            pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
+            image.text((layout_w[0]+4, pos_y), time_start.strftime("%a"), font = font_time_xs, fill = 0) # Draw the date
+            image.rectangle((layout_w[0], pos_y+15, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar small size
+            if len(drawn_dates) != 1 : # Draw horizontal line only if not the first day
+                image.rectangle((layout_w[0], pos_y, layout_w[0] + 160, pos_y - 1), fill = 0) # draw the horizontal bar
         else:
-            image.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"), font = font_time_xs, fill = 0)
-            image.rectangle((layout_w[0], pos_y, layout_w[0]+3, pos_y+event_height), fill = 0)
+            image.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"), font = font_time_xs, fill = 0) # draw the start time
+            image.rectangle((layout_w[0], pos_y, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar entire size
         image.text((layout_w[0]+60, pos_y), cut_text_to_length(draw,event["SUMMARY"], font_time_xs, 100, 6), font = font_time_xs, fill = 0)
 
 # Init display
