@@ -20,3 +20,6 @@ def restart_alarm():
 def power_off():
     stop_alarm
     execute_shell("sudo poweroff")
+
+def refresh_data_cached():
+    execute_shell("/home/pi/AlarmClockProject/AlarmClock/src/get_calendars.sh")

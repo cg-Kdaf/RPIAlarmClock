@@ -8,6 +8,6 @@
 index=0
 
 while IFS= read -r line; do
-    wget ${line} -O "/home/pi/AlarmClockProject/AlarmClock/cache/calendar${index}.ics"
-    index=${index}+1
+    wget -q ${line} -O "/home/pi/AlarmClockProject/AlarmClock/cache/calendars/calendar${index}.ics"
+    index=$((index+1))
 done < /home/pi/AlarmClockProject/AlarmClock/data/calendars.txt

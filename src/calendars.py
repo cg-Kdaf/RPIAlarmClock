@@ -1,20 +1,8 @@
 #!/usr/bin/python3
-from requests import get as requests_get
 from arrow import now as arrow_now,get as arrow_get
 from datetime import datetime, timedelta
-#import re
 
-calendars = [
-    "https://api.ecoledirecte.com/v3/ical/E/6940/516d313257576c78646d45726348704d4e6e427a566e4656547a427459335a334d6974694d557052.ics",# School
-    "https://calendar.google.com/calendar/ical/kdblender%40gmail.com/private-85da5612bb050accd256813f2f9778ef/basic.ics", # KDblender
-    "https://calendar.google.com/calendar/ical/e4lqs9coricqs6h5h8ke5pmglc%40group.calendar.google.com/private-20f21485608b613726a760b2b682c49a/basic.ics", # Family
-    "https://calendar.google.com/calendar/ical/ndo2c5pl0b5hnsdcoqqvm3ptcs%40group.calendar.google.com/private-4041c4e7335061c24806c5950ff87758/basic.ics" # Alarm Clock
-]
-
-def get_calendar(url):
-    return requests_get(url).text
-
-def get_event_from_text(text_file, exclude_passed = True, weekly = False):
+def get_event_from_text(file_index, exclude_passed = True, weekly = False):
     '''Get events upcomming from a ics textfile'''
     timenow = arrow_now().format("YYYYMMDDTHHmmss")+"Z"
     day_time_now = datetime.now().time()
@@ -24,7 +12,10 @@ def get_event_from_text(text_file, exclude_passed = True, weekly = False):
     field_empty = 0
     event_index = -1
     
-    for line in text_file.splitlines():
+    file_path = f"/home/pi/AlarmClockProject/AlarmClock/cache/calendars/calendar{index}.ics"
+    calendar_file = open(file_path, "r")
+    
+    for line in calendar_file.readline():
         
         if (not ":" in line) or (line[0] == " "): # If line is not valid, or start by a space, go next line
             continue
@@ -104,12 +95,15 @@ def sort_events(events, attribute="DTSTART"):
     ''' Sort event by attribute, default DTSTART'''
     return sorted(events, key = lambda i: i[attribute])
 
-def get_calendar_sorted(url):
-    return sort_events(get_event_from_text(get_calendar(url)))
-
-def get_calendars_sorted(urls):
-    events = []
-    for url in urls:
-        events += get_event_from_text(get_calendar(url))
-    sorted_events = sort_events(events)
+def get_calendar_sorted(index):
+    if isinstance(index,int):
+        sorted_events = sort_events(get_event_from_text(index))
+    else:
+        events = []
+        for index in indexs:
+            events += get_event_from_text(index)
+        sorted_events = sort_events(events)
     return sorted_events
+
+if __name__ == "__main__":
+    print(get_calendar_sorted(range(3)))
