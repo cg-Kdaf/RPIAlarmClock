@@ -12,11 +12,10 @@ def get_event_from_text(file_index, exclude_passed = True, weekly = False):
     field_empty = 0
     event_index = -1
     
-    file_path = f"/home/pi/AlarmClockProject/AlarmClock/cache/calendars/calendar{index}.ics"
+    file_path = f"/home/pi/AlarmClockProject/AlarmClock/cache/calendars/calendar{file_index}.ics"
     calendar_file = open(file_path, "r")
     
-    for line in calendar_file.readline():
-        
+    for line in calendar_file:
         if (not ":" in line) or (line[0] == " "): # If line is not valid, or start by a space, go next line
             continue
         
@@ -69,13 +68,13 @@ def get_event_from_text(file_index, exclude_passed = True, weekly = False):
             if ";" in line :
                 terms[0] = line.split(";")[0]
             
-            if len(terms[1]) > 8:
+            if len(terms[1]) > 10:
                 if "Z" in terms[1]:
-                    time_ = datetime.strptime(terms[1],"%Y%m%dT%H%M%SZ") + timedelta(hours = 1)
+                    time_ = datetime.strptime(terms[1],"%Y%m%dT%H%M%SZ ") + timedelta(hours = 1)
                 else:
-                    time_ = datetime.strptime(terms[1],"%Y%m%dT%H%M%S")
+                    time_ = datetime.strptime(terms[1],"%Y%m%dT%H%M%S ")
             else:
-                time_ = datetime.strptime(terms[1],"%Y%m%d")
+                time_ = datetime.strptime(terms[1],"%Y%m%d ")
             
             if weekly:
                 week_day_event = time_.weekday()
@@ -95,15 +94,12 @@ def sort_events(events, attribute="DTSTART"):
     ''' Sort event by attribute, default DTSTART'''
     return sorted(events, key = lambda i: i[attribute])
 
-def get_calendar_sorted(index):
+def get_calendar_sorted(index, exclude_passed = True, weekly = False):
     if isinstance(index,int):
         sorted_events = sort_events(get_event_from_text(index))
     else:
         events = []
-        for index in indexs:
-            events += get_event_from_text(index)
+        for index_ in index:
+            events += get_event_from_text(index_, exclude_passed, weekly)
         sorted_events = sort_events(events)
     return sorted_events
-
-if __name__ == "__main__":
-    print(get_calendar_sorted(range(3)))

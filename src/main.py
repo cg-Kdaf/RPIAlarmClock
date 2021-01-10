@@ -5,7 +5,7 @@ from PIL import Image,ImageDraw,ImageFont
 from datetime import datetime, timedelta
 from math import ceil
 
-from calendars import calendars, get_calendars_sorted, get_event_from_text, sort_events, get_calendar
+from calendars import get_calendar_sorted
 from weather import get_weather_data, weather_intensity, icon_correspondance
 from sound import speaker
 
@@ -96,7 +96,7 @@ def draw_calendar(image,Image_global):
     layout_h = (62,480)
     event_height = 30
     events_number = ceil((layout_h[1] - layout_h[0]) / event_height)
-    events = get_calendars_sorted(calendars[:3])[:events_number]
+    events = get_calendar_sorted(range(3))[:events_number]
     drawn_dates = []
     for index, event in enumerate(events):
         pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
@@ -114,7 +114,7 @@ def draw_calendar(image,Image_global):
         image.text((layout_w[0]+60, pos_y), cut_text_to_length(draw,event["SUMMARY"], font_time_xs, 110, 6), font = font_time_xs, fill = 0)
 
 def compare_time_to_alarm(alarms_passed, speaker):
-    alarm_comming = sort_events(get_event_from_text(get_calendar(calendars[3]),True,True))
+    alarm_comming = get_calendar_sorted(3,True,True)
     if len(alarm_comming) > 0:
         alarm_comming = alarm_comming[0]
     
