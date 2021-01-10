@@ -117,7 +117,7 @@ def compare_time_to_alarm(alarms_passed, speaker):
     alarm_comming = sort_events(get_event_from_text(get_calendar(calendars[3]),True,True))
     if len(alarm_comming) > 0:
         alarm_comming = alarm_comming[0]
-    print(alarm_comming)
+    
     if alarm_comming == []:
         return
     if alarm_comming["STATUS"] == 1 and alarm_comming["SUMMARY"] not in alarms_passed:
@@ -134,15 +134,17 @@ try:
     
     print("Program starts")
     print("Initialisation...")
-    refresh_time = 65 # Refresh every x seconds
+    refresh_time = 180 # Refresh every x seconds
+    print(f"Will refresh every {refresh_time} seconds")
     speaker = speaker()
     #Init display
     epd = epd7in5_V2.EPD()
-    epd.init()
     alarms_passed = []
     while True:
         print("Refresh", datetime.now())
+        compare_time_to_alarm(alarms_passed, speaker)
         
+        epd.init()
         Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
         draw = ImageDraw.Draw(Himage)
 
@@ -156,8 +158,9 @@ try:
         print("...\nSleeping")
         epd.sleep()
         
-        compare_time_to_alarm(alarms_passed, speaker)
-        time_sleep(refresh_time - ((time_time() - starttime) % refresh_time))
+        
+        time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)
+        time_sleep(time_to_sleep)
 
 finally:
     print("Program ended.")

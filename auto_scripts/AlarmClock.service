@@ -1,13 +1,13 @@
 [Unit]
-Description=My service
-After=network.target
+Description=AlarmClock
+After=network-online.target
 
 [Service]
 ExecStart=/usr/bin/python3 -u src/main.py
 WorkingDirectory=/home/pi/AlarmClockProject/AlarmClock
 StandardOutput=inherit
 StandardError=inherit
-Restart=on-failure
+Restart=no
 User=pi
 
 [Install]
