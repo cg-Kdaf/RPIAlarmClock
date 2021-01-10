@@ -1,0 +1,13 @@
+[Unit]
+Description=Use the GPIO 26 to power off the RPi
+
+[Service]
+ExecStart=/usr/bin/python3 -u src/utilities_pwr.py
+WorkingDirectory=/home/pi/AlarmClockProject/AlarmClock
+StandardOutput=inherit
+StandardError=inherit
+Restart=no
+User=pi
+
+[Install]
+WantedBy=multi-user.target
