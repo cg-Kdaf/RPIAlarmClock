@@ -1,22 +1,24 @@
 #!/usr/bin/python3
 from requests import get as requests_get
 from arrow import now as arrow_now,get as arrow_get
-#from datetime import datetime
+from datetime import datetime, timedelta
 #import re
 
 calendars = [
     "https://api.ecoledirecte.com/v3/ical/E/6940/516d313257576c78646d45726348704d4e6e427a566e4656547a427459335a334d6974694d557052.ics",# School
     "https://calendar.google.com/calendar/ical/kdblender%40gmail.com/private-85da5612bb050accd256813f2f9778ef/basic.ics", # KDblender
-    "https://calendar.google.com/calendar/ical/e4lqs9coricqs6h5h8ke5pmglc%40group.calendar.google.com/private-20f21485608b613726a760b2b682c49a/basic.ics" # Family
+    "https://calendar.google.com/calendar/ical/e4lqs9coricqs6h5h8ke5pmglc%40group.calendar.google.com/private-20f21485608b613726a760b2b682c49a/basic.ics", # Family
     "https://calendar.google.com/calendar/ical/ndo2c5pl0b5hnsdcoqqvm3ptcs%40group.calendar.google.com/private-4041c4e7335061c24806c5950ff87758/basic.ics" # Alarm Clock
 ]
 
 def get_calendar(url):
     return requests_get(url).text
 
-def get_event_from_text(text_file,exclude_passed = True):
+def get_event_from_text(text_file, exclude_passed = True, weekly = False):
     '''Get events upcomming from a ics textfile'''
     timenow = arrow_now().format("YYYYMMDDTHHmmss")+"Z"
+    day_time_now = datetime.now().time()
+    week_day_now = datetime.now().weekday()
     events=[]
     in_event = False
     field_empty = 0
@@ -58,7 +60,7 @@ def get_event_from_text(text_file,exclude_passed = True):
                 #pass
             #elif "MONTHLY" in line:
                 #pass
-        if ("DTSTAMP" in line) or ("UID" in line) or ("@" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) : # Go next line if word detected, used to hide unwanted props
+        if ("DTSTAMP" in line) or ("@" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) : # Go next line if word detected, used to hide unwanted props
             continue
         
         if terms[1] == " " : # If attribute value is empty count it
@@ -71,11 +73,28 @@ def get_event_from_text(text_file,exclude_passed = True):
             in_event = False
             continue
         
-        if ("DTSTART" in line) or ("DTEND" in line) :
+        if ("DTSTART" in line) or ("DTEND" in line):
+            
             if ";" in line :
                 terms[0] = line.split(";")[0]
-            if terms[1] < timenow : # Compare time indicated with now
-                events[event_index]["STATUS"] += 1
+            
+            if len(terms[1]) > 8:
+                if "Z" in terms[1]:
+                    time_ = datetime.strptime(terms[1],"%Y%m%dT%H%M%SZ") + timedelta(hours = 1)
+                else:
+                    time_ = datetime.strptime(terms[1],"%Y%m%dT%H%M%S")
+            else:
+                time_ = datetime.strptime(terms[1],"%Y%m%d")
+            
+            if weekly:
+                week_day_event = time_.weekday()
+                day_time_event = time_.time()
+                if week_day_event < week_day_now or day_time_event < day_time_now : # Compare time indicated with now
+                    events[event_index]["STATUS"] += 1
+            else:
+                if terms[1] < timenow : # Compare time indicated with now
+                    events[event_index]["STATUS"] += 1
+            terms[1] = time_
         
         events[event_index][terms[0]] = terms[1] # Append attribute to event
     

@@ -3,9 +3,11 @@
 import epd7in5_V2
 from PIL import Image,ImageDraw,ImageFont
 from datetime import datetime, timedelta
+from math import ceil
 
-from calendars import calendars, get_calendars_sorted
+from calendars import calendars, get_calendars_sorted, get_event_from_text, sort_events, get_calendar
 from weather import get_weather_data, weather_intensity, icon_correspondance
+from sound import speaker
 
 # -- Datas
 
@@ -51,7 +53,7 @@ def draw_time(image,Image_global):
     image.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0) # Separator bottom
     image.rectangle((layout_w[1], layout_h[0], layout_w[1]+2, layout_h[1]+4), fill = 0) # Separator right
 
-    now=datetime.now()
+    now=datetime.now()+timedelta(minutes = 1)
     date_text = now.strftime("%A\n%d %b") # Date as Friday\n01 Jan
     text1_w, text1_h = image.textsize(date_text, font=font_time_s)
     image.text((layout_w[1]-text1_w, layout_h[0]), date_text, font = font_time_s, fill = 0) # Draw date
@@ -93,15 +95,12 @@ def draw_calendar(image,Image_global):
     layout_w = (0,800)
     layout_h = (62,480)
     event_height = 30
-    events_number = int((layout_h[1] - layout_h[0]) / event_height)
-    events = get_calendars_sorted(calendars)[:events_number]
+    events_number = ceil((layout_h[1] - layout_h[0]) / event_height)
+    events = get_calendars_sorted(calendars[:3])[:events_number]
     drawn_dates = []
     for index, event in enumerate(events):
         pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
-        if "Z" in event["DTSTART"]:
-            time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ") + timedelta(hours=1)
-        else:
-            time_start = datetime.strptime(event["DTSTART"],"%Y%m%dT%H%M%SZ")
+        time_start = event["DTSTART"]
         if str(time_start.date()) not in drawn_dates:
             drawn_dates.append(str(time_start.date()))
             pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
@@ -114,19 +113,53 @@ def draw_calendar(image,Image_global):
             image.rectangle((layout_w[0], pos_y, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar entire size
         image.text((layout_w[0]+60, pos_y), cut_text_to_length(draw,event["SUMMARY"], font_time_xs, 110, 6), font = font_time_xs, fill = 0)
 
-# Init display
-epd = epd7in5_V2.EPD()
-epd.init()
-Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
-draw = ImageDraw.Draw(Himage)
+def compare_time_to_alarm(alarms_passed, speaker):
+    alarm_comming = sort_events(get_event_from_text(get_calendar(calendars[3]),True,True))
+    if len(alarm_comming) > 0:
+        alarm_comming = alarm_comming[0]
+    print(alarm_comming)
+    if alarm_comming == []:
+        return
+    if alarm_comming["STATUS"] == 1 and alarm_comming["SUMMARY"] not in alarms_passed:
+        speaker.ring()
+        print("RINGING !!")
+        alarms_passed.append(alarm_comming["SUMMARY"])
+    
 
-print("...\nComputing image")
-draw_time(draw,Himage)
-draw_weather(draw,Himage)
-draw_calendar(draw,Himage)
 
-print("...\nDrawing image")
-epd.display(epd.getbuffer(Himage))
-print("...\nSleeping")
-epd.sleep()
-epd.Dev_exit()
+try:
+    from time import time as time_time, sleep as time_sleep
+    starttime = time_time()
+    
+    
+    print("Program starts")
+    print("Initialisation...")
+    refresh_time = 65 # Refresh every x seconds
+    speaker = speaker()
+    #Init display
+    epd = epd7in5_V2.EPD()
+    epd.init()
+    alarms_passed = []
+    while True:
+        print("Refresh", datetime.now())
+        
+        Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
+        draw = ImageDraw.Draw(Himage)
+
+        print("...\nComputing image")
+        draw_time(draw,Himage)
+        draw_weather(draw,Himage)
+        draw_calendar(draw,Himage)
+
+        print("...\nDrawing image")
+        epd.display(epd.getbuffer(Himage))
+        print("...\nSleeping")
+        epd.sleep()
+        
+        compare_time_to_alarm(alarms_passed, speaker)
+        time_sleep(refresh_time - ((time_time() - starttime) % refresh_time))
+
+finally:
+    print("Program ended.")
+    epd.Dev_exit()
+    speaker.clean_gpio()
