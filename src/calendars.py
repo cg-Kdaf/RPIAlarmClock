@@ -7,6 +7,8 @@ def get_event_from_text(file_index, exclude_passed = True, weekly = False):
     timenow = arrow_now().format("YYYYMMDDTHHmmss")+"Z"
     day_time_now = datetime.now().time()
     week_day_now = datetime.now().weekday()
+    datetime_now = datetime.now()
+    
     events=[]
     in_event = False
     field_empty = 0
@@ -80,16 +82,13 @@ def get_event_from_text(file_index, exclude_passed = True, weekly = False):
                 week_day_event = time_.weekday()
                 day_time_event = time_.time()
                 difference = week_day_event-week_day_now
-                now = datetime.now()
-                time_ = datetime(now.year, now.month, now.day, time_.hour, time_.minute) + timedelta(days = difference)
-                print(time_)
+                time_ = datetime(datetime_now.year, datetime_now.month, datetime_now.day, time_.hour, time_.minute) + timedelta(days = difference)
             
-            if terms[1] < timenow : # Compare time indicated with now
+            if time_ < datetime_now : # Compare time indicated with now
                 events[event_index]["STATUS"] += 1
             terms[1] = time_
         
         events[event_index][terms[0]] = terms[1] # Append attribute to event
-    
     return events
 
 def sort_events(events, attribute="DTSTART"):
