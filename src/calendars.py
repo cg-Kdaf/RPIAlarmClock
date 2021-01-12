@@ -79,11 +79,13 @@ def get_event_from_text(file_index, exclude_passed = True, weekly = False):
             if weekly:
                 week_day_event = time_.weekday()
                 day_time_event = time_.time()
-                if week_day_event < week_day_now or day_time_event < day_time_now : # Compare time indicated with now
-                    events[event_index]["STATUS"] += 1
-            else:
-                if terms[1] < timenow : # Compare time indicated with now
-                    events[event_index]["STATUS"] += 1
+                difference = week_day_event-week_day_now
+                now = datetime.now()
+                time_ = datetime(now.year, now.month, now.day, time_.hour, time_.minute) + timedelta(days = difference)
+                print(time_)
+            
+            if terms[1] < timenow : # Compare time indicated with now
+                events[event_index]["STATUS"] += 1
             terms[1] = time_
         
         events[event_index][terms[0]] = terms[1] # Append attribute to event
@@ -96,10 +98,13 @@ def sort_events(events, attribute="DTSTART"):
 
 def get_calendar_sorted(index, exclude_passed = True, weekly = False):
     if isinstance(index,int):
-        sorted_events = sort_events(get_event_from_text(index))
+        sorted_events = sort_events(get_event_from_text(index, exclude_passed, weekly))
     else:
         events = []
         for index_ in index:
             events += get_event_from_text(index_, exclude_passed, weekly)
         sorted_events = sort_events(events)
     return sorted_events
+
+if __name__ == "__main__":
+    print(get_calendar_sorted(3,True,True))
