@@ -17,7 +17,7 @@ class speaker:
         GPIO.setup(self.speaker_pin,GPIO.OUT)
         self.__buzzer = GPIO.PWM(self.speaker_pin, 1000) # Set frequency to 1000hz (initial value, change to something else afterward)
         self.__buzzer.start(self.dutycycle)
-        for i in range(2):
+        for i in range(10):
             self.__buzzer.ChangeFrequency(440)
             time_sleep(.3)
             self.__buzzer.ChangeFrequency(600)
