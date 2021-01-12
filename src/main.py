@@ -129,6 +129,7 @@ def compare_time_to_alarm(alarms_passed, speaker):
 
 try:
     from time import time as time_time, sleep as time_sleep
+    from system_commands import set_pwr_led
     starttime = time_time()
     
     
@@ -140,18 +141,30 @@ try:
     #Init display
     epd = epd7in5_V2.EPD()
     alarms_passed = []
+    set_pwr_led(0)
     while True:
+        set_pwr_led(1)
+        
+        if '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
+            refresh_time = 180
+        else:
+            refresh_time = 1200
+        print("Refresh every ",refresh_time,"sec")
+            
         print("Refresh", datetime.now())
         compare_time_to_alarm(alarms_passed, speaker)
         
         epd.init()
         Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
         draw = ImageDraw.Draw(Himage)
+        
+        set_pwr_led(0)
 
         print("...\nComputing image")
         draw_time(draw,Himage)
         draw_weather(draw,Himage)
         draw_calendar(draw,Himage)
+        
 
         print("...\nDrawing image")
         epd.display(epd.getbuffer(Himage))
@@ -165,4 +178,3 @@ try:
 finally:
     print("Program ended.")
     epd.Dev_exit()
-    speaker.clean_gpio()

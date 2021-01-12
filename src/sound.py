@@ -11,11 +11,11 @@ class speaker:
         self.dutycycle = 10
         self.volume = volume
         
+    
+    def ring(self):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.speaker_pin,GPIO.OUT)
         self.__buzzer = GPIO.PWM(self.speaker_pin, 1000) # Set frequency to 1000hz (initial value, change to something else afterward)
-    
-    def ring(self):
         self.__buzzer.start(self.dutycycle)
         for i in range(2):
             self.__buzzer.ChangeFrequency(440)
@@ -23,8 +23,6 @@ class speaker:
             self.__buzzer.ChangeFrequency(600)
             time_sleep(.3)
         self.__buzzer.stop()
-
-    def clean_gpio(self):
         GPIO.cleanup()
 
 #speaker = speaker()

@@ -8,13 +8,13 @@ def set_pwr_led(status):
 
 def stop_alarm():
     execute_shell("/home/pi/AlarmClockProject/AlarmClock/auto_scripts/stop.sh")
+    time_sleep(4)
 
 def start_alarm():
     execute_shell("/home/pi/AlarmClockProject/AlarmClock/auto_scripts/start.sh")
 
 def restart_alarm():
     stop_alarm()
-    time_sleep(4)
     start_alarm()
 
 def power_off():
