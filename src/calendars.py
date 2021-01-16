@@ -82,6 +82,8 @@ def get_event_from_text(file_index, exclude_passed = True, weekly = False):
                 week_day_event = time_.weekday()
                 day_time_event = time_.time()
                 difference = week_day_event-week_day_now
+                if difference<0:
+                    difference = 7-difference
                 time_ = datetime(datetime_now.year, datetime_now.month, datetime_now.day, time_.hour, time_.minute) + timedelta(days = difference)
             
             if time_ < datetime_now : # Compare time indicated with now

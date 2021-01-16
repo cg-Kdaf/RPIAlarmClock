@@ -1,4 +1,0 @@
-https://api.ecoledirecte.com/v3/ical/E/6940/516d313257576c78646d45726348704d4e6e427a566e4656547a427459335a334d6974694d557052.ics
-https://calendar.google.com/calendar/ical/kdblender%40gmail.com/private-85da5612bb050accd256813f2f9778ef/basic.ics
-https://calendar.google.com/calendar/ical/e4lqs9coricqs6h5h8ke5pmglc%40group.calendar.google.com/private-20f21485608b613726a760b2b682c49a/basic.ics
-https://calendar.google.com/calendar/ical/ndo2c5pl0b5hnsdcoqqvm3ptcs%40group.calendar.google.com/private-4041c4e7335061c24806c5950ff87758/basic.ics

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from os import system as execute_shell
-from subprocess import run,check_output
+from subprocess import check_output
 from time import sleep as time_sleep
 
 
@@ -26,19 +26,30 @@ def power_off():
 def refresh_data_cached():
     execute_shell("/home/pi/AlarmClockProject/AlarmClock/src/update_data.sh")
 
-def start_programm_at(program, date_time):
+def start_programm_at(program, time_, return_id = False):
     """Return process id (start at 1)
     arg1 if program name (str) ex : /bin/sh
-    arg2 is time of execution (datetime obj)
+    arg2 is time of execution time undertandable by at (str)
     """
-    output_ = check_output(program+" | at " + date_time.strftime('%H:%M %B %d'))
-    output_ = check_output("echo " + output_.split('\n')[1] + " | sed -s 's/.*job\ \([0-9]*\).*/\1/p'")
-    return output_
+    if return_id:
+        programs_before = list_program_at(True)
+    execute_shell('echo "' + program+'" | at ' + time_)
+    if return_id:
+        programs_after = list_program_at(True)
+        print(programs_before,programs_after)
+        if programs_before == []:
+            created = programs_after[0]
+        else:
+            created = list(set(programs_after) - set(programs_before))[0]
+        return created
 
-def list_program_at():
+def list_program_at(id_only = False):
     """Return list of indexes of running prog at"""
     processes = check_output(["at", "-l"]).decode('utf-8').split("\n")[:-1]
-    processes = [''.join([i for i in process[0:4].replace(" ","") if i.isdigit()]) for process in processes]
+    if id_only:
+        processes = [process.replace("\t"," ").split(" ")[0] for process in processes]
+    else:
+        processes = [process.replace("\t"," ").split(" ") for process in processes]
     return processes
 
 def remove_program_at(index):

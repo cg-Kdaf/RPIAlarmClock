@@ -23,7 +23,7 @@ def button_callback(channel):
         pressing = False
         
         press_duration = time_time() - press_start
-        if 3 < press_duration < 15 :
+        if 3 < press_duration < 15 : # Long press for shutdown
             print("Turning off")
             for i in range(30):
                 set_pwr_led(0)
@@ -35,13 +35,14 @@ def button_callback(channel):
                     return
             time_sleep(2)
             power_off()
+        elif 0.1 < press_duration < 1 : # Short press for "instant" refresh
+            pass
     else:
         time_sleep(.05)
         if GPIO.input(BUTTON_GPIO) or pressing:
             return
         press_start = time_time()
         pressing = True
-        
 
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
