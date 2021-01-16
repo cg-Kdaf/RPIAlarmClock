@@ -1,4 +1,5 @@
 .gitignore
-__pycache__/
-cache/
-musics/
+**/__pycache__/
+**/cache/
+*.ics
+*.pyc
