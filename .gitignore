@@ -3,3 +3,8 @@
 **/cache/
 *.ics
 *.pyc
+**/musics/
+*.
+weathers.txt
+calendars.txt
+calendars_names.txt
