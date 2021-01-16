@@ -3,7 +3,14 @@ import signal
 import sys
 from time import time as time_time, sleep as time_sleep
 import RPi.GPIO as GPIO
-from system_commands import set_pwr_led, power_off
+from system_commands import set_pwr_led, power_off, send_signal
+
+"""
+This file is separated from others, to evoid errors.
+If the main.py get an error, this script will not stop,
+    so I'll be able to turnoff RPi without having to disconect cable or doing it via ssh
+"""
+
 
 BUTTON_GPIO = 26
 press_start = None
@@ -36,7 +43,8 @@ def button_callback(channel):
             time_sleep(2)
             power_off()
         elif 0.1 < press_duration < 1 : # Short press for "instant" refresh
-            pass
+            print("Sending SIGUSR1 to main.py")
+            send_signal("main.py","SIGUSR1")
     else:
         time_sleep(.05)
         if GPIO.input(BUTTON_GPIO) or pressing:

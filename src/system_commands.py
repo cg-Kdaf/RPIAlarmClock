@@ -6,7 +6,7 @@ from time import sleep as time_sleep
 
 def set_pwr_led(status):
     """Brightness between 0 and 1"""
-    execute_shell(f'echo {status} | sudo tee /sys/class/leds/led0/brightness >/dev/null')
+    execute_shell(f'echo {status} | sudo tee /sys/class/leds/led0/brightness > /dev/null 2>&1')
 
 def stop_alarm():
     execute_shell("/home/pi/AlarmClockProject/AlarmClock/auto_scripts/stop.sh")
@@ -45,7 +45,7 @@ def start_programm_at(program, time_, return_id = False):
 
 def list_program_at(id_only = False):
     """Return list of indexes of running prog at"""
-    processes = check_output(["at", "-l"]).decode('utf-8').split("\n")[:-1]
+    processes = check_output(["atq"]).decode('utf-8').split("\n")[:-1]
     if id_only:
         processes = [process.replace("\t"," ").split(" ")[0] for process in processes]
     else:
@@ -54,3 +54,7 @@ def list_program_at(id_only = False):
 
 def remove_program_at(index):
     execute_shell(f"atrm {index}")
+    
+def send_signal(process_name,signal):
+    """ Send signal(str) to the process(str) with correspondence to full command """
+    execute_shell(f'pkill -f "{process_name}" --signal {signal}')
