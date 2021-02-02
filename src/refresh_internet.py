@@ -86,7 +86,7 @@ while True:
     else:
         print("INTERNET CONNECTED")
         print("refreshing data")
-        # system_commands.refresh_data_cached()
+        system_commands.refresh_data_cached()
         time_to_sleep = refresh_online*60
     print("refreshing alarms")
     refresh_alarms()

@@ -42,10 +42,12 @@ def start_programm_at(program, time_, return_id=False):
     execute_shell('echo "' + program+'" | at ' + time_)
     if return_id:
         programs_after = list_program_at(True)
-        if programs_before == []:
-            created = programs_after[0]
-        else:
+        print(programs_before, programs_after)
+        if programs_before != [] and programs_before != []:
             created = list(set(programs_after) - set(programs_before))[0]
+        else:
+            created = programs_after[0]
+        print(created)
         return created
 
 
@@ -54,7 +56,7 @@ def list_program_at(id_only=False):
     processes = check_output(["atq"]).decode('utf-8').split("\n")[:-1]
     processes = [process.replace("\t", " ").replace("  ", " ").split(" ") for process in processes]
     if id_only:
-        processes = processes[0]
+        processes = [process[0] for process in processes]
     return processes
 
 

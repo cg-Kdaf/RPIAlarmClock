@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import RPi.GPIO as GPIO
 from time import sleep as time_sleep
+from os import system as execute_shell
 
 
 def ring():
@@ -18,5 +19,11 @@ def ring():
     __buzzer.stop()
     GPIO.cleanup()
 
+
+def start_music():
+    execute_shell("mocp -p")
+
+
 if __name__ == "__main__":
-    ring()
+    # ring()
+    start_music()

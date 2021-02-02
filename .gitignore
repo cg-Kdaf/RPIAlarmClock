@@ -8,3 +8,8 @@
 weathers.txt
 calendars.txt
 calendars_names.txt
+*.bmp
+*.xcf
+*.png
+*.jpg
+workspace.code-workspace

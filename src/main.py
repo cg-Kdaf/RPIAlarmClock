@@ -1,12 +1,35 @@
 #!/usr/bin/python3
-import logging
 import signal
 import sys
 from datetime import datetime
 from display import Display
 import system_commands
+from os import system as os_system
+import logging
 
-logging.basicConfig(level=logging.DEBUG)
+
+# logging.basicConfig(level=logging.DEBUG)
+
+
+def is_computer_on(host="kdaf"):
+    response = os_system("ping -A -q -w 1 " + host + '> /dev/null')
+    return (int(response) == 0)
+
+
+def invert_display():
+    computer = is_computer_on()
+    day = '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000'
+    if computer or day:
+        return False
+    else:
+        return True
+
+
+def time_refresh():
+    if '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
+        return 180
+    else:
+        return 1200
 
 
 def cleaning():  # Put here what to stop when program end
@@ -16,7 +39,7 @@ def cleaning():  # Put here what to stop when program end
 def refresh_screen():
     system_commands.set_pwr_led(1)
 
-    print("\nRefresh", datetime.now())
+    logging.info("\nRefresh", datetime.now())
     system_commands.set_pwr_led(0)
     EPDisplay.refresh()
 
@@ -28,7 +51,7 @@ def Interruption(sig, frame):
 
 
 def User1(sig, frame):
-    print("SIGUSR1 received")
+    print("\n\nSIGUSR1 received")
     refresh_screen()
 
 
@@ -39,23 +62,18 @@ try:
     from time import time as time_time, sleep as time_sleep
     starttime = time_time()
 
-    print("Program starts")
+    logging.info("Program starts")
     EPDisplay = Display()
     system_commands.set_pwr_led(0)
     while True:
-
-        if '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
-            EPDisplay.invert = False
-            refresh_time = 180
-        else:   # If night do invert the screen, to see from the bed AND set refresh time to 1200sec
-            refresh_time = 1200
-            EPDisplay.invert = True
-
+        refresh_time = time_refresh()
+        EPDisplay.invert = invert_display()
         refresh_screen()
-        print("Refresh every ", refresh_time, "sec")
+        logging.info("Refresh every ", refresh_time, "sec")
         time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)
         time_sleep(time_to_sleep)
 
-except Exception:
+except Exception as e:
+    print(e)
     print("\nError")
     cleaning()
