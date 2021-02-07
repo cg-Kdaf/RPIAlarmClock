@@ -55,31 +55,39 @@ class Deezer_Musics():
         self.deezer = Deezer()
         self.credentials = open('/home/pi/Music/deezer_id.txt').readlines()
         self.arl = self.credentials[0].replace("\n", '')
-        self.playlist1_id = self.credentials[1]
+        self.playlists_id = self.credentials[1:]
         self.user_info = self.deezer.login_via_arl(self.arl)
-        self.playlist1 = self.deezer.get_playlist(self.playlist1_id)
+        self.playlists = [self.deezer.get_playlist(pid) for pid in self.playlists_id]
 
-    def get_playlist_songs(self):
-        '''Return a list of track id'''
+    def get_playlists_songs(self):
+        '''Return a list of list of track id'''
         # Available keys : ['DATA', 'COMMENTS', 'CURATOR', 'SONGS']
-        songs = self.playlist1['SONGS']['data']
+        playlists_songs = [playlist['SONGS']['data'] for playlist in self.playlists]
 
         # song keys are : ['SNG_ID', 'PRODUCT_TRACK_ID', 'UPLOAD_ID', 'SNG_TITLE', 'ART_ID', 'PROVIDER_ID', 'ART_NAME', 'ARTIST_IS_DUMMY', 'ARTISTS', 'ALB_ID', 'ALB_TITLE', 'TYPE', 'MD5_ORIGIN', 'VIDEO', 'DURATION', 'ALB_PICTURE', 'ART_PICTURE', 'RANK_SNG', 'FILESIZE_AAC_64', 'FILESIZE_MP3_64', 'FILESIZE_MP3_128', 'FILESIZE_MP3_256', 'FILESIZE_MP3_320', 'FILESIZE_MP4_RA1', 'FILESIZE_MP4_RA2', 'FILESIZE_MP4_RA3', 'FILESIZE_FLAC', 'FILESIZE', 'GAIN', 'MEDIA_VERSION', 'DISK_NUMBER', 'TRACK_NUMBER', 'TRACK_TOKEN', 'TRACK_TOKEN_EXPIRE', 'VERSION', 'MEDIA', 'EXPLICIT_LYRICS', 'RIGHTS', 'ISRC', 'DATE_ADD', 'HIERARCHICAL_TITLE', 'SNG_CONTRIBUTORS', 'LYRICS_ID', 'EXPLICIT_TRACK_CONTENT', '__TYPE__']
-        songs_id = []
-        for song in songs:
-            songs_id.append(song['SNG_ID'])
-        return(songs, songs_id)
+        playlists_songs_id = []
+        for songs in playlists_songs:
+            songs_id = []
+            for song in songs:
+                songs_id.append(song['SNG_ID'])
+            playlists_songs_id.append(songs_id)
+        return(playlists_songs, playlists_songs_id)
 
 
 if __name__ == "__main__":
     print('Getting datas...')
     music = Deezer_Musics()
-    songs, songs_id = music.get_playlist_songs()
-    playlist_path = download_dir+music.playlist1['DATA']['TITLE']+'/'
-    songs_id = compare_already_downloaded_songs(playlist_path, songs)
-    if directory_create(playlist_path) and songs_id != []:
-        print('Downloading datas...')
+    playlists_songs, playlists_songs_id = music.get_playlists_songs()
+    for i, (songs, songs_id) in enumerate(zip(playlists_songs, playlists_songs_id)):
+        print("\nChecking playlist", music.playlists[i]['DATA']['TITLE'])
+        playlist_path = download_dir+music.playlists[i]['DATA']['TITLE']+'/'
+        if directory_create(playlist_path):
+            songs_id = compare_already_downloaded_songs(playlist_path, songs)
+            if songs_id == []:
+                print('Nothing to download in this playlist')
+            else:
+                print('Downloading datas...')
 
-        downloader = Downloader(music.deezer, songs_id, playlist_path,
-                                quality=track_formats.MP3_320, concurrent_downloads=4)
-        downloader.start()
+                downloader = Downloader(music.deezer, songs_id, playlist_path,
+                                        quality=track_formats.MP3_320, concurrent_downloads=4)
+                downloader.start()
