@@ -1,6 +1,7 @@
 from pydeezer import Deezer, Downloader
 from pydeezer.constants import track_formats
 from os import path, mkdir, listdir
+from mutagen import File as mutagen_File
 
 download_dir = "/home/pi/Music/"
 
@@ -14,6 +15,39 @@ def directory_create(directory):
             print("Creation of the directory %s failed" % directory)
             return False
     return True
+
+
+def compare_already_downloaded_songs(playlist_path, songs):
+
+    song_files = [file for file in listdir(playlist_path) if '.mp3' in file]
+    songs_existing = []
+    for song_file in song_files:
+        tags = mutagen_File(playlist_path + song_file)
+        # del tags["APIC:"]
+        # dict_keys(['TIT2', 'TPE1', 'TRCK', 'TALB', 'TPOS', 'TDRC', 'TCON', 'TSRC', 'TPE2', 'TPUB', 'TCOP', 'APIC:'])
+        title = str(tags["TIT2"])  # Get the name of the track
+        start = title.find('(')
+        end = title.find(')')
+        if start != -1 and end != -1:
+            title = title[:start-1]+title[end+1:]
+        authors = str(tags["TPE2"])  # Get author of the published music
+        songs_existing.append((title, authors))
+
+    songs_to_download = []
+    for song in songs:
+        title = song['SNG_TITLE']
+        start = title.find('(')
+        end = title.find(')')
+        if start != -1 and end != -1:
+            title = title[:start-1]+title[end+1:]
+        authors = song['ART_NAME']
+        songs_to_download.append((title, authors))
+
+    difference = list(set(songs_to_download) - set(songs_existing))
+    real_songs_to_download = []
+    for song in difference:
+        real_songs_to_download.append(songs[songs_to_download.index(song)]['SNG_ID'])
+    return(real_songs_to_download)
 
 
 class Deezer_Musics():
@@ -34,24 +68,18 @@ class Deezer_Musics():
         songs_id = []
         for song in songs:
             songs_id.append(song['SNG_ID'])
-        return(songs_id)
+        return(songs, songs_id)
 
 
 if __name__ == "__main__":
     print('Getting datas...')
     music = Deezer_Musics()
-    songs_id = music.get_playlist_songs()
+    songs, songs_id = music.get_playlist_songs()
     playlist_path = download_dir+music.playlist1['DATA']['TITLE']+'/'
-    if directory_create(playlist_path):
-        songs_already_downloaded = [file for file in listdir(playlist_path) if '.mp3' in file]
-        print(songs_already_downloaded)
-        # for song in songs_already_downloaded:
-        #     if '.mp3' not in song:
-        #         continue
-        #     if song
-
+    songs_id = compare_already_downloaded_songs(playlist_path, songs)
+    if directory_create(playlist_path) and songs_id != []:
         print('Downloading datas...')
 
-        downloader = Downloader(music.deezer, songs_id, download_dir,
+        downloader = Downloader(music.deezer, songs_id, playlist_path,
                                 quality=track_formats.MP3_320, concurrent_downloads=4)
         downloader.start()
