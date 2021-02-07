@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 
-def get_event_from_text(file_index, exclude_passed=True, weekly=False):
+def get_event_from_text(file_index, exclude_passed=True):
     '''Get events upcomming from a ics textfile'''
     # timenow = arrow_now().format("YYYYMMDDTHHmmss")+"Z"
     week_day_now = datetime.now().weekday()
@@ -11,6 +11,8 @@ def get_event_from_text(file_index, exclude_passed=True, weekly=False):
 
     events = []
     in_event = False
+    weekly = False
+    exdate_id = 0
     field_empty = 0
     event_index = -1
 
@@ -21,14 +23,16 @@ def get_event_from_text(file_index, exclude_passed=True, weekly=False):
         # If line is not valid, or start by a space, go next line
         if (":" not in line) or (line[0] == " "):
             continue
-
+        line = line.replace("\n", '')
         # Split line with attribute name and attribute value
         terms = line.split(":")
+        print(terms)
 
         if "BEGIN:VEVENT" in line:  # Create new event when begin detected
             events.append({})  # Create the new event
             event_index += 1  # Increse index for each event
             field_empty = 0  # Used to count the empty fields
+            exdate_id = 0  # Used to count the exdates of an event
 
             # STATUS is 0 if event is comming, 1 if event is happening, and 2 if event happened
             events[event_index]["STATUS"] = 0
@@ -39,24 +43,29 @@ def get_event_from_text(file_index, exclude_passed=True, weekly=False):
             continue
 
         if "END:VEVENT" in line:  # Finalize event when end reached
+            if weekly:
+                week_day_event = time_.weekday()
+                difference = week_day_event-week_day_now
+                if difference < 0:
+                    difference += 7
+                if 'DTSTART' in events[event_index].keys():
+                    events[event_index]['DTSTART'] += timedelta(days=difference)
+                if 'DTEND' in events[event_index].keys():
+                    events[event_index]['DTSTART'] += timedelta(days=difference)
+            else:
+                if events[event_index]['DTSTART'] < datetime_now:
+                    events[event_index]["STATUS"] += 1
+                if events[event_index]['DTEND'] < datetime_now:
+                    events[event_index]["STATUS"] += 1
+                if exclude_passed:
+                    if events[event_index]["STATUS"] == 2:
+                        events.pop()
+                        event_index -= 1
+                        field_empty = 0
             in_event = False
             continue
-        # if "RRULE" in line :
-        #     if "UNTIL" in line:
-        #         if re.sub(".*UNTIL=+([^\s;]*);.*",r"\1",line) < timenow :
-        #             continue
-        #     if "INTERVAL" in line:
-        #         interval = re.sub(".*INTERVAL=([0-9]*);.*",r"\1",line)
-        #     if "WEEKLY" in line:
-        #         week_day_start=datetime.strptime(events[event_index]["DTSTART"],'%Y%m%dT%H%M%SZ').isoweekday()
-        #         if timenow.isoweekday() == week_day_start:
 
-        #         pass
-        #     elif "YEARLY" in line:
-        #         pass
-        #     elif "MONTHLY" in line:
-        #         pass
-        if ("DTSTAMP" in line) or ("@" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) : # Go next line if word detected, used to hide unwanted props
+        if ("DTSTAMP" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) : # Go next line if word detected, used to hide unwanted props
             continue
 
         if terms[1] == " ":  # If attribute value is empty count it
@@ -76,24 +85,32 @@ def get_event_from_text(file_index, exclude_passed=True, weekly=False):
 
             if len(terms[1]) > 10:
                 if "Z" in terms[1]:
-                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%SZ ") + timedelta(hours=1)
+                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%SZ") + timedelta(hours=1)
                 else:
-                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%S ")
+                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%S")
             else:
-                time_ = datetime.strptime(terms[1], "%Y%m%d ")
+                time_ = datetime.strptime(terms[1], "%Y%m%d")
 
-            if weekly:
-                week_day_event = time_.weekday()
-                # day_time_event = time_.time()
-                difference = week_day_event-week_day_now
-                if difference < 0:
-                    difference += 7
-                time_ = datetime(datetime_now.year, datetime_now.month, datetime_now.day,
-                                 time_.hour, time_.minute) + timedelta(days=difference)
-
-            if time_ < datetime_now:  # Compare time indicated with now
-                events[event_index]["STATUS"] += 1
             terms[1] = time_
+
+        if "EXDATE" in line:
+            if ";" in line:
+                terms[0] = line.split(";")[0]
+            if "EXDATE" in ''.join(events[event_index].keys()):
+                exdate_id += 1
+            terms[0] = f"{exdate_id}EXDATE"
+            if len(terms[1]) > 10:
+                if "Z" in terms[1]:
+                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%SZ") + timedelta(hours=1)
+                else:
+                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%S")
+            else:
+                time_ = datetime.strptime(terms[1], "%Y%m%d")
+            if time_ == events[event_index]["DTSTART"]
+            terms[1] = time_
+
+        if ("FREQ" in line) and ("WEEKLY" in line):
+            weekly = True
 
         events[event_index][terms[0]] = terms[1]  # Append attribute to event
     return events
@@ -104,16 +121,18 @@ def sort_events(events, attribute="DTSTART"):
     return sorted(events, key=lambda i: i[attribute])
 
 
-def get_calendar_sorted(index, exclude_passed=True, weekly=False):
+def get_calendar_sorted(index, exclude_passed=True):
     if isinstance(index, int):
-        sorted_events = sort_events(get_event_from_text(index, exclude_passed, weekly))
+        sorted_events = sort_events(get_event_from_text(index, exclude_passed))
     else:
         events = []
         for index_ in index:
-            events += get_event_from_text(index_, exclude_passed, weekly)
+            events += get_event_from_text(index_, exclude_passed)
         sorted_events = sort_events(events)
     return sorted_events
 
 
 if __name__ == "__main__":
-    print(get_calendar_sorted(3, True, True))
+    for event in get_calendar_sorted(3, True):
+        print(event)
+        # pass

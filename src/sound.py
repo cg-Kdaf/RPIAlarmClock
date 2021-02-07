@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 import RPi.GPIO as GPIO
 from time import sleep as time_sleep
-from os import system as execute_shell
-
+from music_commands import Music_lib
 
 def ring():
     speaker_pin = 13 # GPIO Pin
@@ -20,10 +19,7 @@ def ring():
     GPIO.cleanup()
 
 
-def start_music():
-    execute_shell("mocp -p")
-
-
 if __name__ == "__main__":
+    mocp = Music_lib()
+    mocp.play_mocp()
     # ring()
-    start_music()
