@@ -112,17 +112,22 @@ class Display():
             pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
             time_start = event["DTSTART"]
             fillin = 0 if event["STATUS"] == 0 else 255
-            if str(time_start.date()) not in drawn_dates:
-                drawn_dates.append(str(time_start.date()))
+            if event["STATUS"] == 0:
+                new_day = False if (str(time_start.date()) in drawn_dates) else True
+                if new_day:
+                    drawn_dates.append(str(time_start.date()))
+            else:
+                new_day = False if ("now" in drawn_dates) else True
+                if new_day:
+                    drawn_dates.append("now")
+                Image_Draw.rectangle((layout_w[0], pos_y, layout_w[1], pos_y+event_height+3),
+                                     fill=0)  # draw a rectangle inverting color
+
+            if new_day:
                 pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
-                if event["STATUS"] == 0:
-                    Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%a"),
-                                    font=self.font_time_xs, fill=fillin)  # Draw the date
-                else:
-                    Image_Draw.rectangle((layout_w[0], pos_y+1, layout_w[1], pos_y+event_height+1),
-                                         fill=0)  # draw a rectangle inverting color
-                    Image_Draw.text((layout_w[0]+4, pos_y), "Now",
-                                    font=self.font_time_xs, fill=fillin)  # Draw now
+                date_draw = time_start.strftime("%a") if event["STATUS"] == 0 else "Now"
+                Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
+                                font=self.font_time_xs, fill=fillin)  # Draw the date
                 Image_Draw.rectangle((layout_w[0], pos_y+15, layout_w[0]+1, pos_y+event_height),
                                      fill=fillin)  # draw the left bar small size
                 if len(drawn_dates) != 1:  # Draw horizontal line only if not the first day

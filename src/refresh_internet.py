@@ -72,7 +72,7 @@ def refresh_alarms():
             new_alarm_id = system_commands.start_programm_at(ring_program, time_start_str, True)
             used_alarms.append(new_alarm_id)
         alarm_activated = True
-    alarms_to_remove = list(set(alarms_infos[0]) - set(used_alarms))
+    alarms_to_remove = list(set(alarms_infos[:0]) - set(used_alarms))
     if alarms_to_remove != []:
         for alarm_id in alarms_to_remove:
             print(f"Alarm {alarm_id} will be removed")
