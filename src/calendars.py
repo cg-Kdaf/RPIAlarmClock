@@ -11,13 +11,21 @@ def get_event_from_text(file_index, exclude_passed=True):
 
     events = []
     in_event = False
-    weekly = False
     exdate_id = 0
     field_empty = 0
     event_index = -1
 
     file_path = f"/home/pi/AlarmClockProject/AlarmClock/cache/calendars/calendar{file_index}.ics"
     calendar_file = open(file_path, "r")
+
+    def str_to_datetime(date_str):
+        if len(date_str) > 10:
+            if "Z" in date_str:
+                return(datetime.strptime(date_str, "%Y%m%dT%H%M%SZ") + timedelta(hours=1))
+            else:
+                return(datetime.strptime(date_str, "%Y%m%dT%H%M%S"))
+        else:
+            return(datetime.strptime(date_str, "%Y%m%d"))
 
     for line in calendar_file:
         # If line is not valid, or start by a space, go next line
@@ -26,7 +34,6 @@ def get_event_from_text(file_index, exclude_passed=True):
         line = line.replace("\n", '')
         # Split line with attribute name and attribute value
         terms = line.split(":")
-        print(terms)
 
         if "BEGIN:VEVENT" in line:  # Create new event when begin detected
             events.append({})  # Create the new event
@@ -43,29 +50,19 @@ def get_event_from_text(file_index, exclude_passed=True):
             continue
 
         if "END:VEVENT" in line:  # Finalize event when end reached
-            if weekly:
-                week_day_event = time_.weekday()
-                difference = week_day_event-week_day_now
-                if difference < 0:
-                    difference += 7
-                if 'DTSTART' in events[event_index].keys():
-                    events[event_index]['DTSTART'] += timedelta(days=difference)
-                if 'DTEND' in events[event_index].keys():
-                    events[event_index]['DTSTART'] += timedelta(days=difference)
-            else:
-                if events[event_index]['DTSTART'] < datetime_now:
-                    events[event_index]["STATUS"] += 1
-                if events[event_index]['DTEND'] < datetime_now:
-                    events[event_index]["STATUS"] += 1
-                if exclude_passed:
-                    if events[event_index]["STATUS"] == 2:
-                        events.pop()
-                        event_index -= 1
-                        field_empty = 0
+            if events[event_index]['DTSTART'] < datetime_now:
+                events[event_index]["STATUS"] += 1
+            if events[event_index]['DTEND'] < datetime_now:
+                events[event_index]["STATUS"] += 1
+            if exclude_passed:
+                if events[event_index]["STATUS"] == 2:
+                    events.pop()
+                    event_index -= 1
+                    field_empty = 0
             in_event = False
             continue
 
-        if ("DTSTAMP" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) : # Go next line if word detected, used to hide unwanted props
+        if ("DTSTAMP" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) or ("UID" in line):  # Go next line if word detected, used to hide unwanted props
             continue
 
         if terms[1] == " ":  # If attribute value is empty count it
@@ -83,15 +80,7 @@ def get_event_from_text(file_index, exclude_passed=True):
             if ";" in line:
                 terms[0] = line.split(";")[0]
 
-            if len(terms[1]) > 10:
-                if "Z" in terms[1]:
-                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%SZ") + timedelta(hours=1)
-                else:
-                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%S")
-            else:
-                time_ = datetime.strptime(terms[1], "%Y%m%d")
-
-            terms[1] = time_
+            terms[1] = str_to_datetime(terms[1])
 
         if "EXDATE" in line:
             if ";" in line:
@@ -99,20 +88,67 @@ def get_event_from_text(file_index, exclude_passed=True):
             if "EXDATE" in ''.join(events[event_index].keys()):
                 exdate_id += 1
             terms[0] = f"{exdate_id}EXDATE"
-            if len(terms[1]) > 10:
-                if "Z" in terms[1]:
-                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%SZ") + timedelta(hours=1)
-                else:
-                    time_ = datetime.strptime(terms[1], "%Y%m%dT%H%M%S")
-            else:
-                time_ = datetime.strptime(terms[1], "%Y%m%d")
-            if time_ == events[event_index]["DTSTART"]
+            time_ = str_to_datetime(terms[1])
+            if time_ == events[event_index]["DTSTART"]:
+                field_empty += 2
             terms[1] = time_
 
-        if ("FREQ" in line) and ("WEEKLY" in line):
-            weekly = True
+        if ("RRULE" in line):
+            rrules = {}
+            for rrule in terms[1].split(';'):
+                rrules[rrule.split('=')[0]] = rrule.split('=')[1]
+            if 'FREQ' not in rrules.keys():
+                continue
+            if 'UNTIL' in rrules.keys():
+                if str_to_datetime(rrules['UNTIL']) < datetime_now:
+                    continue
+
+            if rrules['FREQ'] == "WEEKLY":
+                week_day_event = events[event_index]['DTSTART'].weekday()
+                difference = week_day_event-week_day_now
+                if difference < 0:
+                    difference += 7
+                if 'INTERVAL' in rrules.keys():
+                    days_difference = (datetime_now-events[event_index]['DTSTART']).days
+                    if not (days_difference/int(rrules['INTERVAL'])).is_integer():
+                        continue
+                    # if difference/rrules['INTERVAL']
+                if 'DTSTART' in events[event_index].keys():
+                    start_event = events[event_index]['DTSTART']
+                    events[event_index]['DTSTART'] = datetime(datetime_now.year,
+                                                              datetime_now.month,
+                                                              datetime_now.day,
+                                                              start_event.hour,
+                                                              start_event.minute,
+                                                              start_event.second) + timedelta(days=difference)
+                if 'DTEND' in events[event_index].keys():
+                    end_event = events[event_index]['DTSTART']
+                    events[event_index]['DTEND'] = datetime(datetime_now.year,
+                                                            datetime_now.month,
+                                                            datetime_now.day,
+                                                            end_event.hour,
+                                                            end_event.minute,
+                                                            end_event.second) + timedelta(days=difference)
+            elif rrules['FREQ'] == "YEARLY":
+                if 'DTSTART' in events[event_index].keys():
+                    start_event = events[event_index]['DTSTART']
+                    events[event_index]['DTSTART'] = datetime(datetime_now.year,
+                                                              start_event.month,
+                                                              start_event.day,
+                                                              start_event.hour,
+                                                              start_event.minute,
+                                                              start_event.second)
+                if 'DTEND' in events[event_index].keys():
+                    end_event = events[event_index]['DTSTART']
+                    events[event_index]['DTEND'] = datetime(datetime_now.year,
+                                                            end_event.month,
+                                                            end_event.day,
+                                                            end_event.hour,
+                                                            end_event.minute,
+                                                            end_event.second)
 
         events[event_index][terms[0]] = terms[1]  # Append attribute to event
+
     return events
 
 
@@ -133,6 +169,6 @@ def get_calendar_sorted(index, exclude_passed=True):
 
 
 if __name__ == "__main__":
-    for event in get_calendar_sorted(3, True):
+    for event in get_calendar_sorted(2)[:20]:
         print(event)
         # pass

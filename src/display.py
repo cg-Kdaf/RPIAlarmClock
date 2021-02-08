@@ -102,8 +102,8 @@ class Display():
                 Image_Draw.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°', font = self.font_time_xs, fill = 0)
 
     def draw_calendar(self, Image_Draw, Image_global):
-        layout_w = (0,800)
-        layout_h = (62,480)
+        layout_w = (0, 250)
+        layout_h = (62, 480)
         event_height = 30
         events_number = ceil((layout_h[1] - layout_h[0]) / event_height)
         events = get_calendar_sorted(range(3))[:events_number]
@@ -111,17 +111,33 @@ class Display():
         for index, event in enumerate(events):
             pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
             time_start = event["DTSTART"]
+            fillin = 0 if event["STATUS"] == 0 else 255
             if str(time_start.date()) not in drawn_dates:
                 drawn_dates.append(str(time_start.date()))
                 pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
-                Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%a"), font = self.font_time_xs, fill = 0) # Draw the date
-                Image_Draw.rectangle((layout_w[0], pos_y+15, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar small size
-                if len(drawn_dates) != 1 : # Draw horizontal line only if not the first day
-                    Image_Draw.rectangle((layout_w[0], pos_y - 2, layout_w[0] + 160, pos_y - 1), fill = 0) # draw the horizontal bar
+                if event["STATUS"] == 0:
+                    Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%a"),
+                                    font=self.font_time_xs, fill=fillin)  # Draw the date
+                else:
+                    Image_Draw.rectangle((layout_w[0], pos_y+1, layout_w[1], pos_y+event_height+1),
+                                         fill=0)  # draw a rectangle inverting color
+                    Image_Draw.text((layout_w[0]+4, pos_y), "Now",
+                                    font=self.font_time_xs, fill=fillin)  # Draw now
+                Image_Draw.rectangle((layout_w[0], pos_y+15, layout_w[0]+1, pos_y+event_height),
+                                     fill=fillin)  # draw the left bar small size
+                if len(drawn_dates) != 1:  # Draw horizontal line only if not the first day
+                    Image_Draw.rectangle((layout_w[0], pos_y - 2, layout_w[1], pos_y - 1),
+                                         fill=fillin)  # draw the horizontal bar
             else:
-                Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"), font = self.font_time_xs, fill = 0) # draw the start time
-                Image_Draw.rectangle((layout_w[0], pos_y, layout_w[0]+1, pos_y+event_height), fill = 0) # draw the left bar entire size
-            Image_Draw.text((layout_w[0]+60, pos_y), cut_text_to_length(Image_Draw,event["SUMMARY"], self.font_time_xs, 110, 6), font = self.font_time_xs, fill = 0)
+                if time_start.strftime("%H%M") != "0000":
+                    Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"),
+                                    font=self.font_time_xs, fill=fillin)  # draw the start time
+                Image_Draw.rectangle((layout_w[0], pos_y, layout_w[0]+1, pos_y+event_height),
+                                     fill=fillin)  # draw the left bar entire size
+            Image_Draw.text((layout_w[0]+58, pos_y),
+                            cut_text_to_length(Image_Draw, event["SUMMARY"],
+                                               self.font_time_xs, layout_w[1]-58, 8),
+                            font=self.font_time_xs, fill=fillin)
 
     def draw_image(self, Image_Draw, Image_global):
         image_width, image_height = self.image_bike.size

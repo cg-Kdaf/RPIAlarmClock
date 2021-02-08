@@ -6,8 +6,8 @@ from datetime import datetime
 from calendars import get_calendar_sorted
 
 refresh_offline = 6
-refresh_online = 15
-alarm_activated = True  # This is for knowing when to delete the alarms: only first time if is off
+refresh_online = 20
+alarm_activated = True  # This is to know when to delete the alarms: only first time if is off
 ring_program = "python3 /home/pi/AlarmClockProject/AlarmClock/src/sound.py"
 
 
@@ -44,7 +44,7 @@ def refresh_alarms():
                 alarms_infos[list_column].append(alarms_infos_by_alarm[row][list_column])
         alarms_id = [int(alarm_infos) for alarm_infos in alarms_infos[0]]
 
-    alarms = get_calendar_sorted(3, True, True)
+    alarms = get_calendar_sorted(3)
 
     if "0" in activated and alarm_activated:
         # Remove alarms planned if Alarms are diactivated
@@ -79,16 +79,17 @@ def refresh_alarms():
             system_commands.remove_program_at(int(alarm_id))
 
 
-while True:
-    if not internet():
-        time_to_sleep = refresh_offline*60
-        print("NO INTERNET")
-    else:
-        print("INTERNET CONNECTED")
-        print("refreshing data")
-        system_commands.refresh_data_cached()
-        time_to_sleep = refresh_online*60
-    print("refreshing alarms")
-    refresh_alarms()
-    print("sleep")
-    time_sleep(time_to_sleep)
+if __name__ == "__main__":
+    while True:
+        if not internet():
+            time_to_sleep = refresh_offline*60
+            print("NO INTERNET")
+        else:
+            print("INTERNET CONNECTED")
+            print("refreshing data")
+            system_commands.refresh_data_cached()
+            time_to_sleep = refresh_online*60
+        print("refreshing alarms")
+        refresh_alarms()
+        print("sleep")
+        time_sleep(time_to_sleep)

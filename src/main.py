@@ -37,6 +37,7 @@ def cleaning():  # Put here what to stop when program end
 
 
 def refresh_screen():
+    EPDisplay.invert = invert_display()
     system_commands.set_pwr_led(1)
 
     logging.info("\nRefresh", datetime.now())
@@ -67,7 +68,6 @@ try:
     system_commands.set_pwr_led(0)
     while True:
         refresh_time = time_refresh()
-        EPDisplay.invert = invert_display()
         refresh_screen()
         logging.info("Refresh every ", refresh_time, "sec")
         time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)

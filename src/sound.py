@@ -4,6 +4,7 @@ from time import sleep as time_sleep
 from music_commands import Music_lib
 from os import listdir
 
+
 def ring():
     speaker_pin = 13  # GPIO Pin
     dutycycle = 10
@@ -20,7 +21,7 @@ def ring():
     GPIO.cleanup()
 
 
-if __name__ == "__main__":
+def mocp_play():
     mocp = Music_lib()
     mocp.queue_clear_mocp()
     playlists = listdir('/home/pi/Music/')
@@ -32,4 +33,8 @@ if __name__ == "__main__":
     for playlist in playlists:
         mocp.queue_add_mocp(f'"/home/pi/Music/{playlist}"')
     mocp.play_mocp()
+
+
+if __name__ == "__main__":
+    mocp_play()
     # ring()
