@@ -19,7 +19,7 @@ def cut_text_to_length(Image_Draw, text_, font_, length, min_char_length):
         text_w, text_h = Image_Draw.textsize(text_[:char_length_end], font=font_)
         actual_length = text_w
         char_length_end += 1
-    return text_[:char_length_end-1]
+    return text_[:char_length_end-2]
 
 
 def draw_text_angle(image, image_g, position_, text_, font_, angle_, fill_=0):
@@ -31,6 +31,30 @@ def draw_text_angle(image, image_g, position_, text_, font_, angle_, fill_=0):
     txt_ = txt.rotate(angle_,  expand=True)
 
     image_g.paste(txt_, box=position_)
+
+
+def round_corner(radius, fill):
+    """Draw a round corner"""
+    corner = Image_class.new('1', (radius, radius), 255-fill)
+    draw = ImageDraw.Draw(corner)
+    draw.pieslice((0, 0, radius * 2, radius * 2), 180, 270, fill=fill)
+    return corner
+
+
+def round_rect(size, radius, fill, corners="1111"):
+    """Draw a rounded rectangle"""
+    width, height = size
+    rectangle = Image_class.new('1', size, fill)
+    corner = round_corner(radius, fill)
+    if corners[0] == '1':
+        rectangle.paste(corner, (0, 0))
+    if corners[2] == '1':
+        rectangle.paste(corner.rotate(90), (0, height - radius))  # Rotate the corner and paste it
+    if corners[3] == '1':
+        rectangle.paste(corner.rotate(180), (width - radius, height - radius))
+    if corners[1] == '1':
+        rectangle.paste(corner.rotate(270), (width - radius, 0))
+    return rectangle
 
 
 class Display():
@@ -55,17 +79,17 @@ class Display():
         layout_h = (0, 60)
 
         # Separator bottom
-        Image_Draw.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0)
+        Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)
         # Separator right
-        Image_Draw.rectangle((layout_w[1], layout_h[0], layout_w[1]+2, layout_h[1]+4), fill = 0)
+        Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
 
         now = datetime.now()+timedelta(minutes=1)
         date_text = now.strftime("%A\n%d %b")  # Date as Friday\n01 Jan
         text1_w, text1_h = Image_Draw.textsize(date_text, font=self.font_time_s)
-        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=self.font_time_s, fill=0) # Draw date
+        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=self.font_time_s, fill=0)  # Draw date
         time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
         text2_w, text2_h = Image_Draw.textsize(time_text, font=self.font_time_l)
-        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font=self.font_time_l, fill=0) # Draw time
+        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font=self.font_time_l, fill=0)  # Draw time
         # Draw a widget for the Alarm
         activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
         if "1" in activated:
@@ -76,7 +100,7 @@ class Display():
         layout_w = (330, 800)
         layout_h = (0, 60)
 
-        Image_Draw.rectangle((layout_w[0], layout_h[1], layout_w[1], layout_h[1]+4), fill = 0) # Separator bottom
+        Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)  # Separator bottom
 
         start_day = datetime(2000, 1, 1, 5)
         end_day = datetime(2000, 1, 1, 22)
@@ -112,33 +136,45 @@ class Display():
             pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
             time_start = event["DTSTART"]
             fillin = 0 if event["STATUS"] == 0 else 255
-            if event["STATUS"] == 0:
-                new_day = False if (str(time_start.date()) in drawn_dates) else True
-                if new_day:
-                    drawn_dates.append(str(time_start.date()))
-            else:
+            fillin_date = 0 if event["STATUS"] == 0 else 255
+            if event["STATUS"] != 0:
                 new_day = False if ("now" in drawn_dates) else True
                 if new_day:
                     drawn_dates.append("now")
-                Image_Draw.rectangle((layout_w[0], pos_y, layout_w[1], pos_y+event_height+3),
-                                     fill=0)  # draw a rectangle inverting color
+                Image_global.paste(round_rect((layout_w[1]-layout_w[0], event_height+7),
+                                              10, 0, '0011'),
+                                   (layout_w[0], pos_y),
+                                   round_rect((layout_w[1]-layout_w[0], event_height+7),
+                                              10, 255, '0011'))
+            elif event["DTSTART"].date() == datetime.now().date():
+                new_day = False if ("today" in drawn_dates) else True
+                if new_day:
+                    drawn_dates.append("today")
+                Image_global.paste(round_rect((55, event_height+7), 10, 0),
+                                   (layout_w[0], pos_y),
+                                   round_rect((55, event_height+7), 10, 255))
+                fillin_date = 255
+            else:
+                new_day = False if (str(time_start.date()) in drawn_dates) else True
+                if new_day:
+                    drawn_dates.append(str(time_start.date()))
 
             if new_day:
                 pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
                 date_draw = time_start.strftime("%a") if event["STATUS"] == 0 else "Now"
                 Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
-                                font=self.font_time_xs, fill=fillin)  # Draw the date
-                Image_Draw.rectangle((layout_w[0], pos_y+15, layout_w[0]+1, pos_y+event_height),
-                                     fill=fillin)  # draw the left bar small size
+                                font=self.font_time_xs, fill=fillin_date)  # Draw the date
+                Image_Draw.line((layout_w[0]+1, pos_y+15, layout_w[0]+1, pos_y+event_height),
+                                fill=fillin)  # draw the left bar small size
                 if len(drawn_dates) != 1:  # Draw horizontal line only if not the first day
-                    Image_Draw.rectangle((layout_w[0], pos_y - 2, layout_w[1], pos_y - 1),
-                                         fill=fillin)  # draw the horizontal bar
+                    Image_Draw.line((layout_w[0], pos_y, layout_w[1], pos_y),
+                                    fill=fillin)  # draw the horizontal bar
             else:
                 if time_start.strftime("%H%M") != "0000":
                     Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"),
-                                    font=self.font_time_xs, fill=fillin)  # draw the start time
-                Image_Draw.rectangle((layout_w[0], pos_y, layout_w[0]+1, pos_y+event_height),
-                                     fill=fillin)  # draw the left bar entire size
+                                    font=self.font_time_xs, fill=fillin_date)  # draw the start time
+                Image_Draw.line((layout_w[0]+1, pos_y, layout_w[0]+1, pos_y+event_height),
+                                fill=fillin)  # draw the left bar entire size
             Image_Draw.text((layout_w[0]+58, pos_y),
                             cut_text_to_length(Image_Draw, event["SUMMARY"],
                                                self.font_time_xs, layout_w[1]-58, 8),
