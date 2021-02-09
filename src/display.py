@@ -3,10 +3,11 @@ import epd7in5_V2
 import logging
 from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps
 from datetime import datetime, timedelta
-from math import ceil
-
+from time import time as time_time
 from calendars import get_calendar_sorted
 from weather import get_weather_data
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def cut_text_to_length(Image_Draw, text_, font_, length, min_char_length):
@@ -14,12 +15,12 @@ def cut_text_to_length(Image_Draw, text_, font_, length, min_char_length):
     actual_length = 0
 
     while actual_length < length:
+        char_length_end += 1
         if char_length_end > len(text_):
             break
         text_w, text_h = Image_Draw.textsize(text_[:char_length_end], font=font_)
         actual_length = text_w
-        char_length_end += 1
-    return text_[:char_length_end-2]
+    return text_[:char_length_end-1]
 
 
 def draw_text_angle(image, image_g, position_, text_, font_, angle_, fill_=0):
@@ -48,9 +49,9 @@ def round_rect(size, radius, fill, corners="1111"):
     corner = round_corner(radius, fill)
     if corners[0] == '1':
         rectangle.paste(corner, (0, 0))
-    if corners[2] == '1':
-        rectangle.paste(corner.rotate(90), (0, height - radius))  # Rotate the corner and paste it
     if corners[3] == '1':
+        rectangle.paste(corner.rotate(90), (0, height - radius))  # Rotate the corner and paste it
+    if corners[2] == '1':
         rectangle.paste(corner.rotate(180), (width - radius, height - radius))
     if corners[1] == '1':
         rectangle.paste(corner.rotate(270), (width - radius, 0))
@@ -128,57 +129,76 @@ class Display():
     def draw_calendar(self, Image_Draw, Image_global):
         layout_w = (0, 250)
         layout_h = (62, 480)
-        event_height = 30
-        events_number = ceil((layout_h[1] - layout_h[0]) / event_height)
+        Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
+        event_h = 30
+        date_w = 58
+        sum_char = 18
+        events_number = int((layout_h[1] - layout_h[0]) / event_h)+1
         events = get_calendar_sorted(range(3))[:events_number]
-        drawn_dates = []
-        for index, event in enumerate(events):
-            pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
-            time_start = event["DTSTART"]
-            fillin = 0 if event["STATUS"] == 0 else 255
-            fillin_date = 0 if event["STATUS"] == 0 else 255
+        events_sorted = {}
+        for event in events:
             if event["STATUS"] != 0:
-                new_day = False if ("now" in drawn_dates) else True
-                if new_day:
-                    drawn_dates.append("now")
-                Image_global.paste(round_rect((layout_w[1]-layout_w[0], event_height+7),
-                                              10, 0, '0011'),
-                                   (layout_w[0], pos_y),
-                                   round_rect((layout_w[1]-layout_w[0], event_height+7),
-                                              10, 255, '0011'))
+                if "Now" not in events_sorted.keys():
+                    events_sorted["Now"] = []
+                events_sorted["Now"].append(event)
             elif event["DTSTART"].date() == datetime.now().date():
-                new_day = False if ("today" in drawn_dates) else True
-                if new_day:
-                    drawn_dates.append("today")
-                Image_global.paste(round_rect((55, event_height+7), 10, 0),
-                                   (layout_w[0], pos_y),
-                                   round_rect((55, event_height+7), 10, 255))
-                fillin_date = 255
+                if "Tod" not in events_sorted.keys():
+                    events_sorted["Tod"] = []
+                events_sorted["Tod"].append(event)
             else:
-                new_day = False if (str(time_start.date()) in drawn_dates) else True
-                if new_day:
-                    drawn_dates.append(str(time_start.date()))
+                if event["DTSTART"].date() not in events_sorted.keys():
+                    events_sorted[event["DTSTART"].date()] = []
+                events_sorted[event["DTSTART"].date()].append(event)
 
-            if new_day:
-                pos_y = layout_h[0] + event_height * index + len(drawn_dates) * 3
-                date_draw = time_start.strftime("%a") if event["STATUS"] == 0 else "Now"
-                Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
-                                font=self.font_time_xs, fill=fillin_date)  # Draw the date
-                Image_Draw.line((layout_w[0]+1, pos_y+15, layout_w[0]+1, pos_y+event_height),
-                                fill=fillin)  # draw the left bar small size
-                if len(drawn_dates) != 1:  # Draw horizontal line only if not the first day
-                    Image_Draw.line((layout_w[0], pos_y, layout_w[1], pos_y),
-                                    fill=fillin)  # draw the horizontal bar
+        pos_y = layout_h[0]
+        for event_category in events_sorted:
+            evt_nb = len(events_sorted[event_category])
+            fillin = 0
+            fillin_date = 0
+            line_horiz_w = layout_w[0]+2
+            if event_category == "Now":
+                fillin = 255
+                fillin_date = 255
+                black_back = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
+                                        15, 0, '0011')
+                mask = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
+                                  15, 255, '0011')
+                Image_global.paste(black_back, (layout_w[0], pos_y), mask)
+            elif event_category == "Tod":
+                line_horiz_w += date_w-4
+                fillin = 0
+                fillin_date = 255
+                black_back = round_rect((date_w-2, evt_nb*event_h),
+                                        15, 0, '1101')
+                mask = round_rect((date_w-2, evt_nb*event_h),
+                                  15, 255, '1101')
+                Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             else:
-                if time_start.strftime("%H%M") != "0000":
-                    Image_Draw.text((layout_w[0]+4, pos_y), time_start.strftime("%H:%M"),
-                                    font=self.font_time_xs, fill=fillin_date)  # draw the start time
-                Image_Draw.line((layout_w[0]+1, pos_y, layout_w[0]+1, pos_y+event_height),
-                                fill=fillin)  # draw the left bar entire size
-            Image_Draw.text((layout_w[0]+58, pos_y),
-                            cut_text_to_length(Image_Draw, event["SUMMARY"],
-                                               self.font_time_xs, layout_w[1]-58, 8),
-                            font=self.font_time_xs, fill=fillin)
+                Image_Draw.line((layout_w[0]+1, pos_y+15, layout_w[0]+1, pos_y+evt_nb*event_h),
+                                fill=fillin)  # draw vertical line for all event of the day
+
+            for index, event in enumerate(events_sorted[event_category]):
+                time_start = event["DTSTART"]
+                last = index == (evt_nb-1)
+                date_draw = ''
+                if index == 0:  # if first
+                    if isinstance(event_category, str):
+                        date_draw = event_category
+                    else:
+                        date_draw = event_category.strftime("%a")
+                elif time_start.strftime("%H%M") != "0000":
+                    date_draw = time_start.strftime("%H:%M")
+                if last:
+                    Image_Draw.line((line_horiz_w, pos_y+event_h-1, layout_w[1], pos_y+event_h-1),
+                                    fill=fillin)  # draw horizontal bar if last event
+
+                Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
+                                font=self.font_time_xs, fill=fillin_date)  # draw the start time
+                Image_Draw.text((layout_w[0]+date_w, pos_y),
+                                cut_text_to_length(Image_Draw, event["SUMMARY"],
+                                                   self.font_time_xs, layout_w[1]-date_w, sum_char),
+                                font=self.font_time_xs, fill=fillin)
+                pos_y += event_h  # must be at the end
 
     def draw_image(self, Image_Draw, Image_global):
         image_width, image_height = self.image_bike.size
@@ -207,3 +227,8 @@ class Display():
     def exit(self):
         self.epd.Dev_exit()
         logging.info("Releasing EPD")
+
+
+if __name__ == '__main__':
+    dsp = Display()
+    dsp.refresh()
