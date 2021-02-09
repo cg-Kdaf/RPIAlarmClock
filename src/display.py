@@ -58,6 +58,11 @@ def round_rect(size, radius, fill, corners="1111"):
     return rectangle
 
 
+def display_error(Image_Draw, xy, error_str):
+    font_ = ImageFont.truetype('data/Teko/Teko-Light.ttf', 32)
+    Image_Draw.text(xy, error_str, font=font_, fill=0)
+
+
 class Display():
     def __init__(self):
         logging.info("Creating EPD (ElectronicPaperDisplay) object")
@@ -210,10 +215,17 @@ class Display():
         logging.info("Computing image")
         Image = Image_class.new('1', (self.epd.width, self.epd.height), 255)  # 255: clear the frame
         Draw = ImageDraw.Draw(Image)
-        self.draw_weather(Draw, Image)
-        self.draw_time(Draw, Image)
-        self.draw_calendar(Draw, Image)
-        # self.draw_image(Draw, Image)
+        display_func = [self.draw_weather,
+                        self.draw_time,
+                        # self.draw_image,
+                        self.draw_calendar,
+                        ]
+        for function in display_func:
+            try:
+                function(Draw, Image)
+            except Exception as e:
+                display_error(Draw, (260, 60), f"Error occured with :{function.__name__} \n {e}")
+                print(e)
         if self.invert:
             Image = ImageOps.mirror(Image)  # Mirror image in horizontal axis
             Image = Image.convert('L')  # Convert image to something invertable
