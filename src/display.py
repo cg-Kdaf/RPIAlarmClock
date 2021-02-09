@@ -142,9 +142,9 @@ class Display():
                     events_sorted["Now"] = []
                 events_sorted["Now"].append(event)
             elif event["DTSTART"].date() == datetime.now().date():
-                if "Tod" not in events_sorted.keys():
-                    events_sorted["Tod"] = []
-                events_sorted["Tod"].append(event)
+                if "Today" not in events_sorted.keys():
+                    events_sorted["Today"] = []
+                events_sorted["Today"].append(event)
             else:
                 if event["DTSTART"].date() not in events_sorted.keys():
                     events_sorted[event["DTSTART"].date()] = []
@@ -164,7 +164,7 @@ class Display():
                 mask = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
                                   15, 255, '0011')
                 Image_global.paste(black_back, (layout_w[0], pos_y), mask)
-            elif event_category == "Tod":
+            elif event_category == "Today":
                 line_horiz_w += date_w-4
                 fillin = 0
                 fillin_date = 255
