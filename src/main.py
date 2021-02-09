@@ -40,7 +40,7 @@ def refresh_screen():
     EPDisplay.invert = invert_display()
     system_commands.set_pwr_led(1)
 
-    logging.info("\nRefresh", datetime.now())
+    logging.info(f"\nRefresh{datetime.now()}")
     system_commands.set_pwr_led(0)
     EPDisplay.refresh()
 
@@ -69,7 +69,7 @@ try:
     while True:
         refresh_time = time_refresh()
         refresh_screen()
-        logging.info("Refresh every ", refresh_time, "sec")
+        logging.info(f"Refresh every {refresh_time} sec")
         time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)
         time_sleep(time_to_sleep)
 

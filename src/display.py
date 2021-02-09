@@ -7,7 +7,7 @@ from time import time as time_time
 from calendars import get_calendar_sorted
 from weather import get_weather_data
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 def cut_text_to_length(Image_Draw, text_, font_, length, min_char_length):
