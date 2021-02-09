@@ -3,6 +3,21 @@
 from datetime import datetime, timedelta
 
 
+unwanted_lines = ["DTSTAMP",
+                  "MODIFIED",
+                  "TRANSP",
+                  "CREAT",
+                  "STATUS",
+                  "SEQUENCE",
+                  "APPLE",
+                  "UID",
+                  "LOCATION",
+                  "DESCRIPTION",
+                  "ACKNOWLEDGED",
+                  "ATTACH",
+                  "ACTION"]
+
+
 def get_event_from_text(file_index, exclude_passed=True):
     '''Get events upcomming from a ics textfile'''
     # timenow = arrow_now().format("YYYYMMDDTHHmmss")+"Z"
@@ -35,7 +50,8 @@ def get_event_from_text(file_index, exclude_passed=True):
         # Split line with attribute name and attribute value
         terms = line.split(":")
 
-        if ("DTSTAMP" in line) or ("MODIFIED" in line) or ("TRANSP" in line) or ("CREAT" in line) or ("STATUS" in line) or ("SEQUENCE" in line) or ("APPLE" in line) or ("UID" in line) or ("LOCATION" in line) or ("DESCRIPTION" in line) or ("ACKNOWLEDGED" in line) or ("ATTACH" in line) or ("ACTION" in line):  # Go next line if word detected, used to hide unwanted props
+        if any(x in line for x in unwanted_lines):
+            # Go next line if word detected, used to hide unwanted props
             continue
 
         if "BEGIN:VEVENT" in line:  # Create new event when begin detected
