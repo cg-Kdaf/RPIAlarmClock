@@ -88,6 +88,7 @@ def button2_callback(channel):
             refresh_internet.refresh_alarms()
         elif 0.1 < press_duration < 1:   # Short press for pause mocp
             print("Music playpause")
+            music.toggle_pause_mocp()
             set_pwr_led(1)
             time_sleep(.2)
             set_pwr_led(0)
@@ -95,13 +96,12 @@ def button2_callback(channel):
             set_pwr_led(1)
             time_sleep(.5)
             set_pwr_led(0)
-            music.toggle_pause_mocp()
         elif 7 < press_duration < 10:   # Medium press for exiting mocp
             print("Music exit")
+            music.exit_mocp()
             set_pwr_led(1)
             time_sleep(2)
             set_pwr_led(0)
-            music.exit_mocp()
     else:
         time_sleep(.05)
         if GPIO.input(BUTTON_GPIO2) or pressing2:
