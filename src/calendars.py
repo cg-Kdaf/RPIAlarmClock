@@ -5,12 +5,12 @@ from datetime import datetime, timedelta
 
 unwanted_lines = ["DTSTAMP",
                   "MODIFIED",
-                  "TRANSP",
                   "CREAT",
                   "STATUS",
                   "SEQUENCE",
                   "APPLE",
                   "UID",
+                  "TRANSP",
                   "LOCATION",
                   "DESCRIPTION",
                   "ACKNOWLEDGED",
@@ -21,7 +21,6 @@ unwanted_lines = ["DTSTAMP",
 def get_event_from_text(file_index, exclude_passed=True):
     '''Get events upcomming from a ics textfile'''
     # timenow = arrow_now().format("YYYYMMDDTHHmmss")+"Z"
-    week_day_now = datetime.now().weekday()
     datetime_now = datetime.now()
 
     events = []
@@ -98,7 +97,6 @@ def get_event_from_text(file_index, exclude_passed=True):
             if time_ == events[event_index]["DTSTART"]:
                 field_empty += 2
             terms[1] = time_
-
         elif "RRULE" in line:
             rrules = {}
             for rrule in terms[1].split(';'):
@@ -109,55 +107,34 @@ def get_event_from_text(file_index, exclude_passed=True):
                 if str_to_datetime(rrules['UNTIL']) < datetime_now:
                     continue
 
-            if rrules['FREQ'] == "WEEKLY":
-                week_day_event = events[event_index]['DTSTART'].weekday()
-                difference_start = week_day_event-week_day_now
-                week_day_event = events[event_index]['DTEND'].weekday()
-                difference_end = week_day_event-week_day_now
-                if difference_start < 0:
-                    difference_start += 7
-                if difference_end < 0:
-                    difference_end += 7
-                if 'INTERVAL' in rrules.keys():
-                    interval = int(rrules['INTERVAL'])
-                    days_difference = (datetime_now-events[event_index]['DTSTART']).days
-                    weeks_elapsed = int(days_difference/7)+1
-                    weeks_difference = weeks_elapsed % interval
-                    difference_start += (weeks_difference)*7
-                    difference_end += (weeks_difference)*7
-                if 'DTSTART' in events[event_index].keys():
-                    start_event = events[event_index]['DTSTART']
-                    events[event_index]['DTSTART'] = datetime(datetime_now.year,
-                                                              datetime_now.month,
-                                                              datetime_now.day,
-                                                              start_event.hour,
-                                                              start_event.minute,
-                                                              start_event.second) + timedelta(days=difference_start)
-                if 'DTEND' in events[event_index].keys():
-                    end_event = events[event_index]['DTEND']
-                    events[event_index]['DTEND'] = datetime(datetime_now.year,
-                                                            datetime_now.month,
-                                                            datetime_now.day,
-                                                            end_event.hour,
-                                                            end_event.minute,
-                                                            end_event.second) + timedelta(days=difference_end)
-            elif rrules['FREQ'] == "YEARLY":
-                if 'DTSTART' in events[event_index].keys():
-                    start_event = events[event_index]['DTSTART']
-                    events[event_index]['DTSTART'] = datetime(datetime_now.year,
-                                                              start_event.month,
-                                                              start_event.day,
-                                                              start_event.hour,
-                                                              start_event.minute,
-                                                              start_event.second)
-                if 'DTEND' in events[event_index].keys():
-                    end_event = events[event_index]['DTEND']
-                    events[event_index]['DTEND'] = datetime(datetime_now.year,
-                                                            end_event.month,
-                                                            end_event.day,
-                                                            end_event.hour,
-                                                            end_event.minute,
-                                                            end_event.second)
+            for param_to_change in ['DTSTART', 'DTEND']:
+                if rrules['FREQ'] == "WEEKLY":
+                    time_to_change = events[event_index][param_to_change]
+                    week_day_event = time_to_change.weekday()
+                    difference = week_day_event-datetime_now.weekday()
+                    if difference < 0:
+                        difference += 7
+                    if 'INTERVAL' in rrules.keys():
+                        interval = int(rrules['INTERVAL'])
+                        days_difference = (datetime_now-time_to_change).days
+                        weeks_elapsed = int(days_difference/7)+1
+                        weeks_difference = weeks_elapsed % interval
+                        difference += (weeks_difference)*7
+                    events[event_index][param_to_change] = datetime(datetime_now.year,
+                                                                    datetime_now.month,
+                                                                    datetime_now.day,
+                                                                    time_to_change.hour,
+                                                                    time_to_change.minute,
+                                                                    time_to_change.second) + timedelta(days=difference)
+                elif rrules['FREQ'] == "YEARLY":
+                    time_to_change = events[event_index][param_to_change]
+                    events[event_index][param_to_change] = datetime(datetime_now.year,
+                                                                    time_to_change.month,
+                                                                    time_to_change.day,
+                                                                    time_to_change.hour,
+                                                                    time_to_change.minute,
+                                                                    time_to_change.second)
+
         elif "SUMMARY" in line:
             if (not terms[1]) or terms[1].isspace():
                 field_empty += 5
