@@ -124,27 +124,38 @@ def get_event_from_text(file_index, exclude_passed=True):
                 if rrules['UNTIL'] < datetime_now:
                     continue
 
-            for param_to_change in ['DTSTART', 'DTEND']:
-                time_to_change = event[param_to_change]
-                if rrules['FREQ'] == "WEEKLY":
-                    week_day_event = time_to_change.weekday()
-                    difference = week_day_event-datetime_now.weekday()
-                    if difference < 0:
-                        difference += 7
-                    if 'INTERVAL' in rrules.keys():
-                        interval = int(rrules['INTERVAL'])
-                        days_difference = (datetime_now-time_to_change).days
-                        weeks_elapsed = int(days_difference/7)+1
-                        weeks_difference = weeks_elapsed % interval
-                        difference += (weeks_difference)*7
-                    event[param_to_change] = (datetime(datetime_now.year,
-                                                       datetime_now.month,
-                                                       datetime_now.day,
-                                                       time_to_change.hour,
-                                                       time_to_change.minute,
-                                                       time_to_change.second)
-                                              + timedelta(days=difference))
-                elif rrules['FREQ'] == "YEARLY":
+            if rrules['FREQ'] == "WEEKLY":
+                event_duration = event["DTEND"] - event["DTSTART"]
+                week_day_event_end = event['DTEND'].weekday()
+                difference = week_day_event_end-datetime_now.weekday()
+                if (difference < 0 or
+                   (difference == 0 and event['DTEND'].time() < datetime_now.time())):
+                    difference += 7
+                if 'INTERVAL' in rrules.keys():
+                    interval = int(rrules['INTERVAL'])
+                    days_difference = (datetime_now-event['DTEND']).days
+                    weeks_elapsed = int(days_difference/7)+1
+                    weeks_difference = weeks_elapsed % interval
+                    difference += (weeks_difference)*7
+                event["DTEND"] = (datetime(datetime_now.year,
+                                           datetime_now.month,
+                                           datetime_now.day,
+                                           event['DTEND'].hour,
+                                           event['DTEND'].minute,
+                                           event['DTEND'].second)
+                                  + timedelta(days=difference))
+                event["DTSTART"] = event["DTEND"] - event_duration
+                if "EXDATE" in params:
+                    if not isinstance(event["EXDATE"], list):
+                        event["EXDATE"] = [event["EXDATE"]]
+                    while event["DTSTART"] in event["EXDATE"]:
+                        if 'INTERVAL' in rrules.keys():
+                            event["DTSTART"] += timedelta(weeks=int(rrules['INTERVAL']))
+                        else:
+                            event["DTSTART"] += timedelta(weeks=1)
+            elif rrules['FREQ'] == "YEARLY":
+                for param_to_change in ['DTSTART', 'DTEND']:
+                    time_to_change = event[param_to_change]
                     event[param_to_change] = datetime(datetime_now.year,
                                                       time_to_change.month,
                                                       time_to_change.day,
@@ -177,5 +188,5 @@ def get_calendar_sorted(index, exclude_passed=True):
 
 
 if __name__ == "__main__":
-    for event in get_calendar_sorted(range(3))[:20]:
+    for event in get_calendar_sorted(range(4))[:20]:
         print(event)
