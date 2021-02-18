@@ -94,6 +94,7 @@ def get_event_from_text(file_index, exclude_passed=True):
                 events.pop()
                 event_index -= 1
             in_event = False
+            events[event_index]["CAL_ID"] = file_index
             continue
 
         if any(x in terms[0] for x in dates_lines):
