@@ -16,3 +16,7 @@ while IFS= read -r line; do
     wget -q ${line} -O "/home/pi/AlarmClockProject/AlarmClock/cache/weathers/weather${index}.json"
     index=$((index+1))
 done < /home/pi/AlarmClockProject/AlarmClock/data/weathers.txt
+
+# Get the tasks
+
+python3 /home/pi/AlarmClockProject/AlarmClock/src/google_tasks.py
