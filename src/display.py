@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import epd7in5_V2
 import logging
+import json
 from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps
 from datetime import datetime, timedelta
 from calendars import get_calendar_sorted
@@ -204,6 +205,46 @@ class Display():
                                 font=self.font_time_xs, fill=fillin)
                 pos_y += event_h  # must be at the end
 
+    def draw_tasks(self, Image_Draw, Image_global):
+        layout_w = (250, 450)
+        layout_h = (62, 480)
+        Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
+        title_char = 8
+        tasks = json.loads(open("/home/pi/AlarmClockProject/AlarmClock/cache/ggtasks/tasks.json", "r").read())
+        pos_y = layout_h[0]
+        pos_x = layout_w[0] + 4
+        for task_list_title in tasks:
+            black_back = round_rect((layout_w[1]-layout_w[0], 30),
+                                    15, 0, '1111')
+            mask = round_rect((layout_w[1]-layout_w[0], 30),
+                              15, 255, '1111')
+            Image_global.paste(black_back, (layout_w[0], pos_y), mask)
+            Image_Draw.text((pos_x+20, pos_y),
+                            cut_text_to_length(Image_Draw, task_list_title,
+                                               self.font_time_xs, layout_w[1] - pos_x,
+                                               title_char),
+                            font=self.font_time_xs, fill=255)
+            pos_y += 30
+
+            task_list = tasks[task_list_title]
+            for task_ in task_list:
+                task = task_list[task_]
+
+                Image_Draw.text((pos_x, pos_y),
+                                cut_text_to_length(Image_Draw, task[0]['title'],
+                                                   self.font_time_xs, layout_w[1] - pos_x,
+                                                   title_char),
+                                font=self.font_time_xs, fill=0)
+                pos_y += 30
+                if len(task) > 1:
+                    for subtask in task[1:]:
+                        Image_Draw.text((pos_x+20, pos_y),
+                                        cut_text_to_length(Image_Draw, subtask['title'],
+                                                           self.font_time_xs, layout_w[1] - (pos_x+20),
+                                                           title_char),
+                                        font=self.font_time_xs, fill=0)
+                        pos_y += 30
+
     def draw_image(self, Image_Draw, Image_global):
         image_width, image_height = self.image_bike.size
         Image_global.paste(self.image_bike, (800-image_width, 480-image_height))
@@ -218,6 +259,7 @@ class Display():
                         self.draw_time,
                         # self.draw_image,
                         self.draw_calendar,
+                        self.draw_tasks,
                         ]
         for function in display_func:
             try:

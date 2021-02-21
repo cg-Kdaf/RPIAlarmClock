@@ -38,13 +38,28 @@ def get_task_lists():
     for tasklist in tasklists.get('items'):
         index = tasklist.get('id')
         title = tasklist.get('title')
-        tasks[title] = []
-        tasks[title] += service.tasks().list(tasklist=index).execute().get('items')
+        tasks[title] = {}
+        tasks_list = service.tasks().list(tasklist=index).execute().get('items')
+        parents = []
+        childs = []
+        for task in tasks_list:
+            if 'parent' in task.keys():
+                childs.append(task)
+            else:
+                parents.append(task)
+        parents = sorted(parents, key=lambda i: i['position'])
+        childs = sorted(childs, key=lambda i: i['position'])
+        for task in parents+childs:
+            if 'parent' in task.keys():
+                tasks[title][task['parent']].append(task)
+            else:
+                tasks[title][task['id']] = [task]
     return(tasks)
 
 
 if __name__ == '__main__':
     tasks = get_task_lists()
+    # print(tasks)
     import json
     cache_file = os.path.join('/home/pi/AlarmClockProject/AlarmClock/cache/ggtasks', 'tasks.json')
     with open(cache_file, 'w', encoding='utf-8') as jsonfile:
