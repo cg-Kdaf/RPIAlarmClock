@@ -9,6 +9,7 @@ import logging
 
 
 # logging.basicConfig(level=logging.DEBUG)
+cal_freeze = [0]
 
 
 def is_computer_on(host="kdaf"):
@@ -26,7 +27,11 @@ def invert_display():
 
 
 def time_refresh():
-    if '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
+    in_event_freeze = any(event['CAL_ID'] in cal_freeze for event in EPDisplay.happening_events)
+    print(EPDisplay.happening_events)
+    if in_event_freeze:
+        return 3600
+    elif '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
         return 180
     else:
         return 1200
@@ -67,8 +72,8 @@ try:
     EPDisplay = Display()
     system_commands.set_pwr_led(0)
     while True:
-        refresh_time = time_refresh()
         refresh_screen()
+        refresh_time = time_refresh()
         logging.info(f"Refresh every {refresh_time} sec")
         time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)
         time_sleep(time_to_sleep)
