@@ -57,8 +57,7 @@ def button_callback(channel):
             print("Refreshing cached datas")
             refresh_data_cached()
     elif channel == BUTTON_GPIO2:
-        if 2 < press_duration < 5:
-            print("Test")
+        if 2 < press_duration < 5:   # Medium press for alarm toggling
             activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
             if "1" in activated:
                 execute_shell("echo 0 > /home/pi/AlarmClockProject/AlarmClock/cache/alarm_status")
@@ -67,8 +66,8 @@ def button_callback(channel):
                 execute_shell("echo 1 > /home/pi/AlarmClockProject/AlarmClock/cache/alarm_status")
                 print("Set alarm to on")
             print("Refresh alarm and display")
-            send_signal("main.py", "SIGUSR1")
             refresh_internet.refresh_alarms()
+            send_signal("main.py", "SIGUSR1")
         elif 0.1 < press_duration < 1:   # Short press for pause mocp
             print("Music playpause")
             music.toggle_pause_mocp()
