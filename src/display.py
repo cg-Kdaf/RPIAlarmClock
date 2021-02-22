@@ -75,6 +75,7 @@ class Display():
         self.font_time_xs_bold = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 24)
         self.ring_icon = Image_class.open('data/bell.bmp')
         self.image_bike = Image_class.open('data/image_bike2.bmp')
+        self.happening_events = []
 
         self.invert = False
 
@@ -132,6 +133,7 @@ class Display():
                 Image_Draw.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°', font = self.font_time_xs, fill = 0)
 
     def draw_calendar(self, Image_Draw, Image_global):
+        self.happening_events = []
         layout_w = (0, 250)
         layout_h = (62, 480)
         Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
@@ -146,6 +148,7 @@ class Display():
                 if "Now" not in events_sorted.keys():
                     events_sorted["Now"] = []
                 events_sorted["Now"].append(event)
+                self.happening_events.append(event)
             elif event["DTSTART"].date() == datetime.now().date():
                 if "Today" not in events_sorted.keys():
                     events_sorted["Today"] = []
@@ -269,9 +272,9 @@ class Display():
                 print(e)
         if self.invert:
             Image = ImageOps.mirror(Image)  # Mirror image in horizontal axis
-            Image = Image.convert('L')  # Convert image to something invertable
-            Image = ImageOps.invert(Image)  # Invert BW image
-            Image = Image.convert('1')  # convert back to BlackWhite
+            # Image = Image.convert('L')  # Convert image to something invertable
+            # Image = ImageOps.invert(Image)  # Invert BW image
+            # Image = Image.convert('1')  # convert back to BlackWhite
         logging.info("Sending image to display")
         self.epd.display(self.epd.getbuffer(Image))
         logging.info("Sleeping")
