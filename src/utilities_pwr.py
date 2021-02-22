@@ -16,10 +16,6 @@ If the main.py get an error, this script will not stop,
 
 BUTTON_GPIO1 = 26
 BUTTON_GPIO2 = 19
-press_start1 = None
-pressing1 = False
-press_start2 = None
-pressing2 = False
 music = Music_lib()
 
 
@@ -29,15 +25,18 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-def button1_callback(channel):
-    global press_start1, pressing1
-    if GPIO.input(BUTTON_GPIO1):
-        time_sleep(.05)
-        if not GPIO.input(BUTTON_GPIO1) or not pressing1:
-            return
-        pressing1 = False
-
-        press_duration = time_time() - press_start1
+def button_callback(channel):
+    press_start = time_time()
+    while True:
+        if GPIO.input(channel):
+            time_sleep(.05)
+            if GPIO.input(channel):
+                break
+    press_duration = time_time() - press_start
+    if press_duration < .1:
+        return
+    print(press_duration, channel)
+    if channel == BUTTON_GPIO1:
         if 5 < press_duration < 10:  # Long press for shutdown
             print("Turning off")
             for i in range(30):
@@ -47,6 +46,7 @@ def button1_callback(channel):
                 time_sleep(1/(i+2))
                 if not GPIO.input(BUTTON_GPIO1):
                     print("Abort poweroff")
+                    set_pwr_led(0)
                     return
             time_sleep(2)
             power_off()
@@ -56,24 +56,7 @@ def button1_callback(channel):
         elif 1.5 < press_duration < 5:   # Medium press for data refresh
             print("Refreshing cached datas")
             refresh_data_cached()
-
-    else:
-        time_sleep(.05)
-        if GPIO.input(BUTTON_GPIO1) or pressing1:
-            return
-        press_start1 = time_time()
-        pressing1 = True
-
-
-def button2_callback(channel):
-    global press_start2, pressing2, music
-    if GPIO.input(BUTTON_GPIO2):
-        time_sleep(.05)
-        if not GPIO.input(BUTTON_GPIO2) or not pressing2:
-            return
-        pressing2 = False
-
-        press_duration = time_time() - press_start2
+    elif channel == BUTTON_GPIO2:
         if 2 < press_duration < 5:
             print("Test")
             activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
@@ -102,12 +85,6 @@ def button2_callback(channel):
             set_pwr_led(1)
             time_sleep(2)
             set_pwr_led(0)
-    else:
-        time_sleep(.05)
-        if GPIO.input(BUTTON_GPIO2) or pressing2:
-            return
-        press_start2 = time_time()
-        pressing2 = True
 
 
 if __name__ == '__main__':
@@ -115,8 +92,8 @@ if __name__ == '__main__':
     GPIO.setup(BUTTON_GPIO1, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(BUTTON_GPIO2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    GPIO.add_event_detect(BUTTON_GPIO1, GPIO.BOTH, callback=button1_callback)
-    GPIO.add_event_detect(BUTTON_GPIO2, GPIO.BOTH, callback=button2_callback)
+    GPIO.add_event_detect(BUTTON_GPIO1, GPIO.FALLING, callback=button_callback)
+    GPIO.add_event_detect(BUTTON_GPIO2, GPIO.FALLING, callback=button_callback)
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.pause()
