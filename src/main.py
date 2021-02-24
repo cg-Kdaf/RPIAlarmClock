@@ -8,8 +8,9 @@ from os import system as os_system
 import logging
 
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 cal_freeze = [0]
+is_refreshing = False
 
 
 def is_computer_on(host="kdaf"):
@@ -28,7 +29,6 @@ def invert_display():
 
 def time_refresh():
     in_event_freeze = any(event['CAL_ID'] in cal_freeze for event in EPDisplay.happening_events)
-    print(EPDisplay.happening_events)
     if in_event_freeze:
         return 3600
     elif '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
@@ -42,12 +42,17 @@ def cleaning():  # Put here what to stop when program end
 
 
 def refresh_screen():
+    global is_refreshing
+    if is_refreshing:
+        return
+    is_refreshing = True
     EPDisplay.invert = invert_display()
     system_commands.set_pwr_led(1)
 
     logging.info(f"\nRefresh{datetime.now()}")
     system_commands.set_pwr_led(0)
     EPDisplay.refresh()
+    is_refreshing = False
 
 
 def Interruption(sig, frame):
