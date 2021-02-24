@@ -183,7 +183,6 @@ def get_ED_calendar():
                                  int(date_str[8:10]),  # Day
                                  int(date_str[11:13]),  # Hour
                                  int(date_str[14:16]))  # Minute
-        print(date_str, datetime_time)
         return(datetime_time)
 
     events = get_calendar()
@@ -196,7 +195,7 @@ def get_ED_calendar():
         event["STATUS"] += event["DTEND"] < datetime_now
         if event["STATUS"] < 2:
             events_filtered.append(event)
-    return events
+    return events_filtered
 
 
 def sort_events(events, attribute="DTSTART"):

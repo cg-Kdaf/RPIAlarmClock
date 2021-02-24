@@ -202,6 +202,9 @@ class Display():
 
                 Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
                                 font=self.font_time_xs, fill=fillin_date)  # draw the start time
+                if 'TODO' in event.keys():
+                    if event['TODO']:
+                        event['SUMMARY'] = event['SUMMARY'] + ' TODO'
                 Image_Draw.text((layout_w[0]+date_w, pos_y),
                                 cut_text_to_length(Image_Draw, event["SUMMARY"],
                                                    self.font_time_xs, layout_w[1]-date_w, sum_char),
