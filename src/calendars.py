@@ -172,22 +172,51 @@ def get_event_from_text(file_index, exclude_passed=True):
     return events_comming
 
 
+def get_ED_calendar():
+    from ED_utilities import get_calendar
+    from datetime import datetime
+    datetime_now = datetime.now()
+
+    def str_to_datetime(date_str):
+        datetime_time = datetime(int(date_str[:4]),  # Year
+                                 int(date_str[5:7]),  # Month
+                                 int(date_str[8:10]),  # Day
+                                 int(date_str[11:13]),  # Hour
+                                 int(date_str[14:16]))  # Minute
+        print(date_str, datetime_time)
+        return(datetime_time)
+
+    events = get_calendar()
+    events_filtered = []
+    for event in events:
+        event["DTSTART"] = str_to_datetime(event["DTSTART"])
+        event["DTEND"] = str_to_datetime(event["DTEND"])
+        event["STATUS"] = 0
+        event["STATUS"] += event["DTSTART"] < datetime_now
+        event["STATUS"] += event["DTEND"] < datetime_now
+        if event["STATUS"] < 2:
+            events_filtered.append(event)
+    return events
+
+
 def sort_events(events, attribute="DTSTART"):
     ''' Sort event by attribute, default DTSTART'''
     return sorted(events, key=lambda i: i[attribute])
 
 
-def get_calendar_sorted(index, exclude_passed=True):
+def get_calendar_sorted(index, exclude_passed=True, get_ed=False):
+    events = []
     if isinstance(index, int):
-        sorted_events = sort_events(get_event_from_text(index, exclude_passed))
+        events = get_event_from_text(index, exclude_passed)
     else:
-        events = []
         for index_ in index:
             events += get_event_from_text(index_, exclude_passed)
-        sorted_events = sort_events(events)
+    if get_ed:
+        events += get_ED_calendar()
+    sorted_events = sort_events(events)
     return sorted_events
 
 
 if __name__ == "__main__":
-    for event in get_calendar_sorted(range(4))[:20]:
+    for event in get_calendar_sorted(range(3))[:20]:
         print(event)

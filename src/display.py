@@ -141,7 +141,7 @@ class Display():
         date_w = 58
         sum_char = 18
         events_number = int((layout_h[1] - layout_h[0]) / event_h)+1
-        events = get_calendar_sorted(range(3))[:events_number]
+        events = get_calendar_sorted(range(2), get_ed=True)[:events_number]
         events_sorted = {}
         for event in events:
             if event["STATUS"] != 0:
