@@ -94,7 +94,7 @@ def get_latest_notes():
         better_than_class = individual_note > class_avg
         note_str = f"{individual_note}/{note['noteSur']}"
         subject = note['codeMatiere']
-        news_desc += f"\{subject}: {note_str} {'+' if better_than_class else '-'}  "
+        news_desc += f"\n{subject} : {note_str} {'+' if better_than_class else '-'}  "
     add_news(300, datetime_now, 'Latest notes', news_desc)
 
 

@@ -98,7 +98,6 @@ class Display():
         time_font = font(self.font_orbitron, 64, 'Regular')
         date_font = font(self.font_orbitron, 24, 'SemiBold')
 
-
         # Separator bottom
         Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)
         # Separator right
@@ -156,7 +155,7 @@ class Display():
         font_event = font(self.font_teko, 26, 'Medium')
 
         # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
-        event_h = 26
+        event_h = 28
         event_h_half = int(event_h/2)
         date_w = 58
         sum_char = 18
@@ -242,7 +241,7 @@ class Display():
 
         font_task = font(self.font_teko, 26, 'Medium')
 
-        task_h = 26
+        task_h = 28
         task_h_half = int(task_h/2)
         # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
         title_char = 8
@@ -282,16 +281,22 @@ class Display():
                         pos_y += task_h
 
     def draw_news(self, Image_Draw, Image_global):
-        layout_w = (400, 800)
+        layout_w = (415, 800)
         layout_h = (62, 480)
         news_h = 30
-        news_subline_h = 26
+        news_subline_h = 22
         news = get_news()
         pos_y = layout_h[0]
         for news_index in news.keys():
             Image_Draw.text((layout_w[0], pos_y), news[news_index]['title']+' :',
-                            font=font(self.font_orbitron, 24, 'SemiBold'), fill=0)
+                            font=font(self.font_orbitron, 28, 'Black'), fill=0)
             pos_y += news_h
+            for line in news[news_index]['desc'].split('\n'):
+                if not line.strip():
+                    continue
+                Image_Draw.text((layout_w[0]+8, pos_y), line,
+                                font=font(self.font_orbitron, 20, 'ExtraBold'), fill=0)
+                pos_y += news_subline_h
 
     def draw_image(self, Image_Draw, Image_global):
         image_width, image_height = self.image_bike.size
