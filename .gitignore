@@ -1,15 +1,9 @@
 .gitignore
 **/__pycache__/
 **/cache/
+**/data/
 *.ics
 *.pyc
 **/musics/
 *.
-weathers.txt
-calendars.txt
-calendars_names.txt
-*.bmp
-*.xcf
-*.png
-*.jpg
 workspace.code-workspace
