@@ -74,6 +74,7 @@ class Display():
         self.font_time_xs = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 26)
         self.font_time_xs_bold = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 24)
         self.ring_icon = Image_class.open('data/bell.bmp')
+        self.homework_icon = Image_class.open('data/homework.bmp')
         self.image_bike = Image_class.open('data/image_bike2.bmp')
         self.happening_events = []
 
@@ -134,10 +135,11 @@ class Display():
 
     def draw_calendar(self, Image_Draw, Image_global):
         self.happening_events = []
-        layout_w = (0, 250)
+        layout_w = (0, 180)
         layout_h = (62, 480)
-        Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
-        event_h = 30
+        # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
+        event_h = 26
+        event_h_half = int(event_h/2)
         date_w = 58
         sum_char = 18
         events_number = int((layout_h[1] - layout_h[0]) / event_h)+1
@@ -168,21 +170,21 @@ class Display():
                 fillin = 255
                 fillin_date = 255
                 black_back = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
-                                        15, 0, '0011')
+                                        event_h_half, 0, '0011')
                 mask = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
-                                  15, 255, '0011')
+                                  event_h_half, 255, '0011')
                 Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             elif event_category == "Today":
                 line_horiz_w += date_w-4
                 fillin = 0
                 fillin_date = 255
                 black_back = round_rect((date_w-2, evt_nb*event_h),
-                                        15, 0, '1101')
+                                        event_h_half, 0, '1101')
                 mask = round_rect((date_w-2, evt_nb*event_h),
-                                  15, 255, '1101')
+                                  event_h_half, 255, '1101')
                 Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             else:
-                Image_Draw.line((layout_w[0]+1, pos_y+15, layout_w[0]+1, pos_y+evt_nb*event_h),
+                Image_Draw.line((layout_w[0]+1, pos_y+event_h_half, layout_w[0]+1, pos_y+evt_nb*event_h),
                                 fill=fillin)  # draw vertical line for all event of the day
 
             for index, event in enumerate(events_sorted[event_category]):
@@ -197,40 +199,44 @@ class Display():
                 elif time_start.strftime("%H%M") != "0000":
                     date_draw = time_start.strftime("%H:%M")
                 if last:
-                    Image_Draw.line((line_horiz_w, pos_y+event_h-1, layout_w[1], pos_y+event_h-1),
+                    Image_Draw.line((line_horiz_w, pos_y+event_h, layout_w[1]-45, pos_y+event_h),
                                     fill=fillin)  # draw horizontal bar if last event
 
                 Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
                                 font=self.font_time_xs, fill=fillin_date)  # draw the start time
                 if 'TODO' in event.keys():
                     if event['TODO']:
-                        event['SUMMARY'] = event['SUMMARY'] + ' TODO'
+                        Image_global.paste(self.homework_icon, (layout_w[1] - 30, pos_y))
+                event["SUMMARY"] = cut_text_to_length(Image_Draw, event["SUMMARY"],
+                                                      self.font_time_xs,
+                                                      layout_w[1]-date_w,
+                                                      sum_char)
                 Image_Draw.text((layout_w[0]+date_w, pos_y),
-                                cut_text_to_length(Image_Draw, event["SUMMARY"],
-                                                   self.font_time_xs, layout_w[1]-date_w, sum_char),
-                                font=self.font_time_xs, fill=fillin)
+                                event["SUMMARY"], font=self.font_time_xs, fill=fillin)
                 pos_y += event_h  # must be at the end
 
     def draw_tasks(self, Image_Draw, Image_global):
-        layout_w = (250, 450)
+        layout_w = (190, 400)
         layout_h = (62, 480)
-        Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
+        task_h = 26
+        task_h_half = int(task_h/2)
+        # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
         title_char = 8
         tasks = json.loads(open("/home/pi/AlarmClockProject/AlarmClock/cache/ggtasks/tasks.json", "r").read())
         pos_y = layout_h[0]
         pos_x = layout_w[0] + 4
         for task_list_title in tasks:
-            black_back = round_rect((layout_w[1]-layout_w[0], 30),
-                                    15, 0, '1111')
-            mask = round_rect((layout_w[1]-layout_w[0], 30),
-                              15, 255, '1111')
+            black_back = round_rect((layout_w[1]-layout_w[0], task_h),
+                                    task_h_half, 0, '1111')
+            mask = round_rect((layout_w[1]-layout_w[0], task_h),
+                              task_h_half, 255, '1111')
             Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             Image_Draw.text((pos_x+20, pos_y),
                             cut_text_to_length(Image_Draw, task_list_title,
                                                self.font_time_xs, layout_w[1] - pos_x,
                                                title_char),
                             font=self.font_time_xs, fill=255)
-            pos_y += 30
+            pos_y += task_h
 
             task_list = tasks[task_list_title]
             for task_ in task_list:
@@ -241,7 +247,7 @@ class Display():
                                                    self.font_time_xs, layout_w[1] - pos_x,
                                                    title_char),
                                 font=self.font_time_xs, fill=0)
-                pos_y += 30
+                pos_y += task_h
                 if len(task) > 1:
                     for subtask in task[1:]:
                         Image_Draw.text((pos_x+20, pos_y),
@@ -249,7 +255,7 @@ class Display():
                                                            self.font_time_xs, layout_w[1] - (pos_x+20),
                                                            title_char),
                                         font=self.font_time_xs, fill=0)
-                        pos_y += 30
+                        pos_y += task_h
 
     def draw_image(self, Image_Draw, Image_global):
         image_width, image_height = self.image_bike.size
@@ -267,12 +273,15 @@ class Display():
                         self.draw_calendar,
                         self.draw_tasks,
                         ]
+        error_lines = 0
         for function in display_func:
             try:
                 function(Draw, Image)
             except Exception as e:
-                display_error(Draw, (260, 60), f"Error occured with :{function.__name__} \n {e}")
-                print(e)
+                error_message = f"Error occured with :{function.__name__} \n {e}"
+                display_error(Draw, (260, 60+error_lines*30), error_message)
+                error_lines += 2
+                print(error_message)
         if self.invert:
             Image = ImageOps.mirror(Image)  # Mirror image in horizontal axis
             # Image = Image.convert('L')  # Convert image to something invertable
