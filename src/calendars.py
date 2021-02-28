@@ -173,17 +173,7 @@ def get_event_from_text(file_index, exclude_passed=True):
 
 
 def get_ED_calendar():
-    from ED_utilities import get_calendar
-    from datetime import datetime
-    datetime_now = datetime.now()
-
-    def str_to_datetime(date_str):
-        datetime_time = datetime(int(date_str[:4]),  # Year
-                                 int(date_str[5:7]),  # Month
-                                 int(date_str[8:10]),  # Day
-                                 int(date_str[11:13]),  # Hour
-                                 int(date_str[14:16]))  # Minute
-        return(datetime_time)
+    from ED_utilities import get_calendar, str_to_datetime, datetime_now
 
     events = get_calendar()
     events_filtered = []

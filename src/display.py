@@ -6,6 +6,7 @@ from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps
 from datetime import datetime, timedelta
 from calendars import get_calendar_sorted
 from weather import get_weather_data
+from news_utilities import get_news
 
 # logging.basicConfig(level=logging.DEBUG)
 
@@ -257,6 +258,18 @@ class Display():
                                         font=self.font_time_xs, fill=0)
                         pos_y += task_h
 
+    def draw_news(self, Image_Draw, Image_global):
+        layout_w = (400, 800)
+        layout_h = (62, 480)
+        news_h = 26
+        news_h_half = int(news_h/2)
+        news = get_news()
+        pos_y = layout_h[0]
+        for news_index in news.keys():
+            Image_Draw.text((layout_w[0], pos_y), news[news_index]['title']+news[news_index]['desc'],
+                            font=self.font_time_xs, fill=0)
+            pos_y += news_h
+
     def draw_image(self, Image_Draw, Image_global):
         image_width, image_height = self.image_bike.size
         Image_global.paste(self.image_bike, (800-image_width, 480-image_height))
@@ -272,6 +285,7 @@ class Display():
                         # self.draw_image,
                         self.draw_calendar,
                         self.draw_tasks,
+                        self.draw_news,
                         ]
         error_lines = 0
         for function in display_func:
