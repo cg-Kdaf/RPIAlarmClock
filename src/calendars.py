@@ -217,5 +217,5 @@ def get_calendar_sorted(index, exclude_passed=True, get_ed=False):
 
 
 if __name__ == "__main__":
-    for event in get_calendar_sorted(range(3))[:20]:
+    for event in get_calendar_sorted(range(3), get_ed=True)[:20]:
         print(event)

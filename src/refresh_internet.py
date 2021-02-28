@@ -1,5 +1,4 @@
 import socket
-from time import sleep as time_sleep
 import system_commands
 from datetime import datetime
 
@@ -44,7 +43,7 @@ def refresh_alarms():
                 alarms_infos[list_column].append(alarms_infos_by_alarm[row][list_column])
         alarms_id = [int(alarm_infos) for alarm_infos in alarms_infos[0]]
 
-    alarms = get_calendar_sorted(3)
+    alarms = get_calendar_sorted(2)
 
     if "0" in activated and alarm_activated:
         # Remove alarms planned if Alarms are diactivated
@@ -79,17 +78,16 @@ def refresh_alarms():
             system_commands.remove_program_at(int(alarm_id))
 
 
+def refresh_internet():
+    if not internet():
+        print("NO INTERNET")
+    else:
+        print("INTERNET CONNECTED")
+        print("refreshing data")
+        system_commands.refresh_data_cached()
+    print("refreshing alarms")
+    refresh_alarms()
+
+
 if __name__ == "__main__":
-    while True:
-        if not internet():
-            time_to_sleep = refresh_offline*60
-            print("NO INTERNET")
-        else:
-            print("INTERNET CONNECTED")
-            print("refreshing data")
-            system_commands.refresh_data_cached()
-            time_to_sleep = refresh_online*60
-        print("refreshing alarms")
-        refresh_alarms()
-        print("sleep")
-        time_sleep(time_to_sleep)
+    refresh_internet()

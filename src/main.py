@@ -9,7 +9,7 @@ import logging
 
 
 logging.basicConfig(level=logging.WARNING)
-cal_freeze = [0]
+cal_freeze = [200]
 is_refreshing = False
 
 

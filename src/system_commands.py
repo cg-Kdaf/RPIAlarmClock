@@ -24,7 +24,7 @@ def restart_alarm():
 
 
 def power_off():
-    stop_alarm
+    stop_alarm()
     execute_shell("sudo poweroff")
 
 

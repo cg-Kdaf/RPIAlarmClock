@@ -3,9 +3,9 @@ import signal
 import sys
 from time import time as time_time, sleep as time_sleep
 import RPi.GPIO as GPIO
-from system_commands import set_pwr_led, power_off, send_signal, execute_shell, refresh_data_cached
+from system_commands import set_pwr_led, power_off, send_signal, execute_shell
 from music_commands import Music_lib
-import refresh_internet
+from refresh_internet import refresh_alarms, refresh_internet
 
 """
 This file is separated from others, to evoid errors.
@@ -55,7 +55,7 @@ def button_callback(channel):
             send_signal("main.py", "SIGUSR1")
         elif 1.5 < press_duration < 5:   # Medium press for data refresh
             print("Refreshing cached datas")
-            refresh_data_cached()
+            refresh_internet()
     elif channel == BUTTON_GPIO2:
         if 2 < press_duration < 5:   # Medium press for alarm toggling
             activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
@@ -66,7 +66,7 @@ def button_callback(channel):
                 execute_shell("echo 1 > /home/pi/AlarmClockProject/AlarmClock/cache/alarm_status")
                 print("Set alarm to on")
             print("Refresh alarm and display")
-            refresh_internet.refresh_alarms()
+            refresh_alarms()
             send_signal("main.py", "SIGUSR1")
         elif 0.1 < press_duration < 1:   # Short press for pause mocp
             print("Music playpause")
