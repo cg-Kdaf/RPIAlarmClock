@@ -64,19 +64,28 @@ def display_error(Image_Draw, xy, error_str):
     Image_Draw.text(xy, error_str, font=font_, fill=0)
 
 
+def font(path, size, extansion=None):
+    if isinstance(path[0], str):
+        path = f"{path[0].split('.')[0]}-{extansion}.{path[0].split('.')[1]}"
+    return ImageFont.truetype(path, size)
+
+
 class Display():
     def __init__(self):
         logging.info("Creating EPD (ElectronicPaperDisplay) object")
-        self.font_large = ImageFont.truetype('data/Font.ttc', 128)
-        self.font_medium = ImageFont.truetype('data/Teko/Teko-Light.ttf', 32)
-        self.font_weather = ImageFont.truetype('data/weather_font.ttf', 40)
-        self.font_time_l = ImageFont.truetype('data/Orbitron/static/Orbitron-Regular.ttf', 64)
-        self.font_time_s = ImageFont.truetype('data/Orbitron/static/Orbitron-SemiBold.ttf', 24)
-        self.font_time_xs = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 26)
-        self.font_time_xs_bold = ImageFont.truetype('data/Teko/Teko-Medium.ttf', 24)
         self.ring_icon = Image_class.open('data/bell.bmp')
         self.homework_icon = Image_class.open('data/homework.bmp')
         self.image_bike = Image_class.open('data/image_bike2.bmp')
+
+        self.font_weather = 'data/weather_font.ttf'
+        self.font_teko = ['data/Teko/Teko.ttf',
+                          'Light', 'Bold', 'Medium', 'Regular', 'SemiBold']
+        self.font_tulpenone = 'data/Tulpen_One/TulpenOne-Regular.ttf'
+        self.font_orbitron = ['data/Orbitron/static/Orbitron.ttf',
+                              'Black', 'Bold', 'ExtraBold', 'Medium', 'Regular', 'SemiBold']
+        self.font_balsamiq = ['data/Balsamiq_Sans/BalsamiqSans.ttf',
+                              'BoldItalic', 'Bold', 'Italic', 'Regular']
+        self.font_monoton = 'data/Monoton/Monoton-Regular.ttf'
         self.happening_events = []
 
         self.invert = False
@@ -86,6 +95,9 @@ class Display():
     def draw_time(self, Image_Draw, Image_global):
         layout_w = (0, 330)
         layout_h = (0, 60)
+        time_font = font(self.font_orbitron, 64, 'Regular')
+        date_font = font(self.font_orbitron, 24, 'SemiBold')
+
 
         # Separator bottom
         Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)
@@ -94,11 +106,11 @@ class Display():
 
         now = datetime.now()+timedelta(minutes=1)
         date_text = now.strftime("%A\n%d %b")  # Date as Friday\n01 Jan
-        text1_w, text1_h = Image_Draw.textsize(date_text, font=self.font_time_s)
-        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=self.font_time_s, fill=0)  # Draw date
+        text1_w, text1_h = Image_Draw.textsize(date_text, font=date_font)
+        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=date_font, fill=0)  # Draw date
         time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
-        text2_w, text2_h = Image_Draw.textsize(time_text, font=self.font_time_l)
-        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font=self.font_time_l, fill=0)  # Draw time
+        text2_w, text2_h = Image_Draw.textsize(time_text, font=time_font)
+        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font=time_font, fill=0)  # Draw time
         # Draw a widget for the Alarm
         activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
         if "1" in activated:
@@ -108,6 +120,8 @@ class Display():
         now = datetime.now()
         layout_w = (330, 800)
         layout_h = (0, 60)
+
+        date_font = font(self.font_teko, 24, 'Medium')
 
         Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)  # Separator bottom
 
@@ -128,16 +142,19 @@ class Display():
         for index_day, day in enumerate(weather_data):
             pos_x = layout_w[0]+80*index_day
             date = datetime.strptime(day,'%Y-%m-%d')
-            date_text = ("Today" if now.date() == date.date() else cut_text_to_length(Image_Draw, date.strftime('%A'), self.font_time_xs_bold, 55, 5))
-            draw_text_angle(Image_Draw, Image_global, (pos_x+4,0), date_text, self.font_time_xs_bold, 90)
+            date_text = ("Today" if now.date() == date.date() else cut_text_to_length(Image_Draw, date.strftime('%A'), date_font, 55, 5))
+            draw_text_angle(Image_Draw, Image_global, (pos_x+4,0), date_text, date_font, 90)
             for index_part, prop in enumerate(["temp_min","temp_max"]):
                 pos_y = index_part*30
-                Image_Draw.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°', font = self.font_time_xs, fill = 0)
+                Image_Draw.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°', font=font(self.font_teko, 26, 'Medium'), fill=0)
 
     def draw_calendar(self, Image_Draw, Image_global):
         self.happening_events = []
         layout_w = (0, 180)
         layout_h = (62, 480)
+
+        font_event = font(self.font_teko, 26, 'Medium')
+
         # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
         event_h = 26
         event_h_half = int(event_h/2)
@@ -204,21 +221,27 @@ class Display():
                                     fill=fillin)  # draw horizontal bar if last event
 
                 Image_Draw.text((layout_w[0]+4, pos_y), date_draw,
-                                font=self.font_time_xs, fill=fillin_date)  # draw the start time
+                                font=font_event, fill=fillin_date)  # draw the start time
                 if 'TODO' in event.keys():
                     if event['TODO']:
-                        Image_global.paste(self.homework_icon, (layout_w[1] - 30, pos_y))
+                        mask = self.homework_icon.convert('L')
+                        mask = ImageOps.invert(mask)  # Invert BW image
+                        mask = mask.convert('1')  # convert back to Binary image
+                        Image_global.paste(self.homework_icon, (layout_w[1] - 30, pos_y), mask)
                 event["SUMMARY"] = cut_text_to_length(Image_Draw, event["SUMMARY"],
-                                                      self.font_time_xs,
+                                                      font_event,
                                                       layout_w[1]-date_w,
                                                       sum_char)
                 Image_Draw.text((layout_w[0]+date_w, pos_y),
-                                event["SUMMARY"], font=self.font_time_xs, fill=fillin)
+                                event["SUMMARY"], font=font_event, fill=fillin)
                 pos_y += event_h  # must be at the end
 
     def draw_tasks(self, Image_Draw, Image_global):
         layout_w = (190, 400)
         layout_h = (62, 480)
+
+        font_task = font(self.font_teko, 26, 'Medium')
+
         task_h = 26
         task_h_half = int(task_h/2)
         # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
@@ -234,9 +257,9 @@ class Display():
             Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             Image_Draw.text((pos_x+20, pos_y),
                             cut_text_to_length(Image_Draw, task_list_title,
-                                               self.font_time_xs, layout_w[1] - pos_x,
+                                               font_task, layout_w[1] - pos_x,
                                                title_char),
-                            font=self.font_time_xs, fill=255)
+                            font=font_task, fill=255)
             pos_y += task_h
 
             task_list = tasks[task_list_title]
@@ -245,29 +268,29 @@ class Display():
 
                 Image_Draw.text((pos_x, pos_y),
                                 cut_text_to_length(Image_Draw, task[0]['title'],
-                                                   self.font_time_xs, layout_w[1] - pos_x,
+                                                   font_task, layout_w[1] - pos_x,
                                                    title_char),
-                                font=self.font_time_xs, fill=0)
+                                font=font_task, fill=0)
                 pos_y += task_h
                 if len(task) > 1:
                     for subtask in task[1:]:
                         Image_Draw.text((pos_x+20, pos_y),
                                         cut_text_to_length(Image_Draw, subtask['title'],
-                                                           self.font_time_xs, layout_w[1] - (pos_x+20),
+                                                           font_task, layout_w[1] - (pos_x+20),
                                                            title_char),
-                                        font=self.font_time_xs, fill=0)
+                                        font=font_task, fill=0)
                         pos_y += task_h
 
     def draw_news(self, Image_Draw, Image_global):
         layout_w = (400, 800)
         layout_h = (62, 480)
-        news_h = 26
-        news_h_half = int(news_h/2)
+        news_h = 30
+        news_subline_h = 26
         news = get_news()
         pos_y = layout_h[0]
         for news_index in news.keys():
-            Image_Draw.text((layout_w[0], pos_y), news[news_index]['title']+news[news_index]['desc'],
-                            font=self.font_time_xs, fill=0)
+            Image_Draw.text((layout_w[0], pos_y), news[news_index]['title']+' :',
+                            font=font(self.font_orbitron, 24, 'SemiBold'), fill=0)
             pos_y += news_h
 
     def draw_image(self, Image_Draw, Image_global):
