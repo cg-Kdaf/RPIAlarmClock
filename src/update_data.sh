@@ -20,3 +20,7 @@ done < /home/pi/AlarmClockProject/AlarmClock/data/weathers.txt
 # Get the tasks
 
 python3 /home/pi/AlarmClockProject/AlarmClock/src/google_tasks.py
+
+# Get the ecoledirect data
+
+python3 /home/pi/AlarmClockProject/AlarmClock/src/ED_utilities.py
