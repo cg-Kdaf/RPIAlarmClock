@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 # import RPi.GPIO as GPIO
-from time import sleep as time_sleep
 from music_commands import Music_lib
 from os import listdir
 
