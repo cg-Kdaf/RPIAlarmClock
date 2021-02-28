@@ -21,7 +21,8 @@ def store_calendar():
     for work_day in homeworks:
         for work in homeworks[work_day]:
             code = work['codeMatiere']
-            home_works.append([code, work_day])
+            if not work['effectue']:
+                home_works.append([code, work_day])
 
     events = []
     for lesson in calendar:
