@@ -99,5 +99,5 @@ def get_latest_notes():
 
 
 if __name__ == "__main__":
-    # store_calendar()
+    store_calendar()
     get_latest_notes()

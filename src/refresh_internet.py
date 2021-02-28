@@ -1,8 +1,10 @@
 import socket
 import system_commands
-from datetime import datetime
+from datetime import datetime, timedelta
+from os import listdir
 
 from calendars import get_calendar_sorted
+from news_utilities import add_news
 
 refresh_offline = 6
 refresh_online = 20
@@ -53,6 +55,19 @@ def refresh_alarms():
                 print(alarm_id)
                 system_commands.remove_program_at(int(alarm_id))
         alarm_activated = False
+
+    if alarm_activated:  # Adding a piece of news for the upcomming alarm
+        datetime_start = alarms[0]['DTSTART']
+        playlists = listdir('/home/pi/Music/')
+        first_playlist = [p_name for p_name in playlists if "First" in p_name]
+        first_music = listdir(f"/home/pi/Music/{first_playlist[0]}/")[0]
+        if datetime_start.date() == (datetime.now()+timedelta(days=1)).date():
+            date_str_start = 'Tommo'
+        else:
+            date_str_start = datetime_start.strftime('%d%b')
+        date_str_start += datetime_start.strftime('  %H:%M')
+        date_str_start += '\n Music : ' + ''.join(first_music.split('.')[:-1])
+        add_news(25, datetime.now(), 'Upcomming alarm', date_str_start)
 
     used_alarms = []
     if "1" in activated:
