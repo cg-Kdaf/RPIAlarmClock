@@ -1,6 +1,6 @@
 from pydeezer import Deezer, Downloader
 from pydeezer.constants import track_formats
-from os import path, mkdir, listdir
+from os import path, mkdir, listdir, remove
 from mutagen import File as mutagen_File
 
 download_dir = "/home/pi/Music/"
@@ -17,7 +17,9 @@ def directory_create(directory):
     return True
 
 
-def compare_already_downloaded_songs(playlist_path, songs):
+def compare_already_downloaded_songs(playlist_path, songs, return_rm=False):
+    ''' Return songs id list to download from a playlist path and a songs list
+        If return_rm then return a list of songs filenames to remove '''
 
     song_files = [file for file in listdir(playlist_path) if '.mp3' in file]
     songs_existing = []
@@ -47,7 +49,12 @@ def compare_already_downloaded_songs(playlist_path, songs):
     real_songs_to_download = []
     for song in difference:
         real_songs_to_download.append(songs[songs_to_download.index(song)]['SNG_ID'])
-    return(real_songs_to_download)
+    if return_rm:
+        difference_rm = list(set(songs_existing) - set(songs_to_download))
+        files_rm = [song_files[songs_existing.index(title_art)] for title_art in difference_rm]
+        return(real_songs_to_download, files_rm)
+    else:
+        return(real_songs_to_download)
 
 
 class Deezer_Musics():
@@ -82,7 +89,16 @@ if __name__ == "__main__":
         print("\nChecking playlist", music.playlists[i]['DATA']['TITLE'])
         playlist_path = download_dir+music.playlists[i]['DATA']['TITLE']+'/'
         if directory_create(playlist_path):
-            songs_id = compare_already_downloaded_songs(playlist_path, songs)
+            songs_id, songs_rm = compare_already_downloaded_songs(playlist_path, songs, True)
+            if songs_rm != []:
+                for song_file in songs_rm:
+                    remove(playlist_path+song_file)
+                    lyric_file = ''.join(song_file.split(".")[:-1])+'.lrc'
+                    if lyric_file in listdir(playlist_path):
+                        remove(playlist_path+lyric_file)
+                        print(f"Removed {playlist_path+song_file} plus its lyrics")
+                    else:
+                        print(f"Removed {playlist_path+song_file}")
             if songs_id == []:
                 print('Nothing to download in this playlist')
             else:
