@@ -183,8 +183,9 @@ def get_ED_calendar():
         event["STATUS"] = 0
         event["STATUS"] += event["DTSTART"] < datetime_now
         event["STATUS"] += event["DTEND"] < datetime_now
-        if event["STATUS"] < 2:
-            events_filtered.append(event)
+        if event["STATUS"] == 2:
+            continue
+        events_filtered.append(event)
     return events_filtered
 
 
