@@ -272,6 +272,9 @@ class Display():
                                 font=font_task, fill=0)
                 pos_y += task_h
                 if len(task) > 1:
+                    Image_Draw.line((layout_w[0]+8, pos_y,
+                                     layout_w[0]+8, pos_y + (len(task)-1) * task_h),
+                                    width=2, fill=0)
                     for subtask in task[1:]:
                         Image_Draw.text((pos_x+20, pos_y),
                                         cut_text_to_length(Image_Draw, subtask['title'],
