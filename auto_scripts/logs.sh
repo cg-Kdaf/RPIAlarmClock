@@ -11,4 +11,4 @@ journalctl -b -u AlarmClock.service --lines=${lines} -q | cut --complement -d' '
 echo "\n\nPWR Programm\n\n"
 journalctl -b -u Utilities_PWR.service --lines=${lines} -q | cut --complement -d' ' -f4-5
 echo "\n\nCrontab\n\n"
-grep --ignore-case CRON /var/log/syslog | tail -${lines} | cut --complement -d' ' -f4-5 | grep -v 'hourly' | grep -v 'weekly' | grep -v 'daily'
+grep --ignore-case CRON /var/log/syslog | tail -${lines} | grep -v 'hourly' | grep -v 'weekly' | grep -v 'daily'
