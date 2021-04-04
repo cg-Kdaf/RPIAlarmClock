@@ -21,20 +21,27 @@ class EcoleDirect:
     def connect(self, username: str, password: str):
         """create an connection to the API"""
 
-        connection = self.__req('https://api.ecoledirecte.com/v3/login.awp', """data={}"identifiant": "{}","motdepasse": "{}"{}""".format("{", username, password, "}"))
+        path = 'https://api.ecoledirecte.com/v3/login.awp'
+        args = """data={}"identifiant": "{}","motdepasse": "{}"{}"""
+        args = args.format("{", username, password, "}")
+        connection = self.__req(path, args)
         if connection.json()['code'] != 200:
             print("error ! bad username or password")
         else:
             self.token = connection.json()['token']
             self.id = connection.json()['data']['accounts'][0]['id']
 
-    def getWT(self, startDate=datetime.date.today().strftime("%Y-%m-%d"), endDate=(datetime.date.today() + datetime.timedelta(days=6)).strftime("%Y-%m-%d")):
+    def getWT(self, startDate=datetime.date.today().strftime("%Y-%m-%d"),
+              endDate=(datetime.date.today() + datetime.timedelta(days=6)).strftime("%Y-%m-%d")):
         """get the work time from the api"""
         if self.token is None or self.id is None:
             print("Error connection must be acitvate")
             return
 
-        connection = self.__req('https://api.ecoledirecte.com/v3/E/{}/emploidutemps.awp?verbe=get&'.format(self.id), """data={}"token":"{}","dateDebut": "{}","dateFin": "{}","avecTrous": false,{}""".format("{", self.token, startDate, endDate, "}"))
+        path = 'https://api.ecoledirecte.com/v3/E/{}/emploidutemps.awp?verbe=get&'.format(self.id)
+        args = 'data={}"token":"{}","dateDebut": "{}","dateFin": "{}","avecTrous": false,{}'
+        args = args.format("{", self.token, startDate, endDate, "}")
+        connection = self.__req(path, args)
         if connection.json()['code'] != 200:
             print("error ! bad username or password")
         else:
@@ -47,7 +54,9 @@ class EcoleDirect:
             print("Error connection must be acitvate")
             return
 
-        connection = self.__req('https://api.ecoledirecte.com/v3/Eleves/{}/cahierdetexte.awp?verbe=get&'.format(self.id), """data={}"token":"{}"{}""".format("{", self.token, "}"))
+        path = f'https://api.ecoledirecte.com/v3/Eleves/{self.id}/cahierdetexte.awp?verbe=get&'
+        args = """data={}"token":"{}"{}""".format("{", self.token, "}")
+        connection = self.__req(path, args)
         if connection.json()['code'] != 200:
             print("error ! bad username or password")
         else:
@@ -60,7 +69,9 @@ class EcoleDirect:
             print("Error connection must be acitvate")
             return
 
-        connection = self.__req('https://api.ecoledirecte.com/v3/eleves/{}/notes.awp?verbe=get&'.format(self.id), """data={}"token":"{}"{}""".format("{", self.token, "}"))
+        path = f'https://api.ecoledirecte.com/v3/eleves/{self.id}/notes.awp?verbe=get&'
+        args = """data={}"token":"{}"{}""".format("{", self.token, "}")
+        connection = self.__req(path, args)
         if connection.json()['code'] != 200:
             print("error ! bad username or password")
         else:
@@ -73,7 +84,9 @@ class EcoleDirect:
             print("Error connection must be acitvate")
             return
 
-        connection = self.__req('https://api.ecoledirecte.com/v3/eleves/{}/viescolaire.awp?verbe=get&='.format(self.id), """data={}"token":"{}"{}""".format("{", self.token, "}"))
+        path = f'https://api.ecoledirecte.com/v3/eleves/{self.id}/viescolaire.awp?verbe=get&='
+        args = """data={}"token":"{}"{}""".format("{", self.token, "}")
+        connection = self.__req(path, args)
         if connection.json()['code'] != 200:
             print("error ! bad username or password")
         else:
@@ -86,7 +99,9 @@ class EcoleDirect:
             print("Error connection must be acitvate")
             return
 
-        connection = self.__req('https://api.ecoledirecte.com/v3/cloud/E/{}.awp?verbe=get&='.format(self.id), """data={}"token":"{}"{}""".format("{", self.token, "}"))
+        path = f'https://api.ecoledirecte.com/v3/cloud/E/{self.id}.awp?verbe=get&='
+        args = """data={}"token":"{}"{}""".format("{", self.token, "}")
+        connection = self.__req(path, args)
         if connection.json()['code'] != 200:
             print("error ! bad username or password")
         else:

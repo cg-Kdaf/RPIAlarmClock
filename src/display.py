@@ -2,7 +2,7 @@
 import epd7in5_V2
 import logging
 import json
-from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps, ImageChops
+from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps
 from datetime import datetime, timedelta
 from calendars import get_calendar_sorted
 from weather import get_weather_data
@@ -29,7 +29,7 @@ def draw_text_angle(image, image_g, position_, text_, font_, angle_, fill_=0):
     text_w, text_h = image.textsize(text_, font=font_)
     txt = Image_class.new('1', (text_w, text_h), 255)
     d = ImageDraw.Draw(txt)
-    d.text((0,0), text_,  font=font_, fill=fill_)
+    d.text((0, 0), text_,  font=font_, fill=fill_)
     txt_ = txt.rotate(angle_,  expand=True)
 
     image_g.paste(txt_, box=position_)
@@ -106,10 +106,13 @@ class Display():
         now = datetime.now()+timedelta(minutes=1)
         date_text = now.strftime("%A\n%d %b")  # Date as Friday\n01 Jan
         text1_w, text1_h = Image_Draw.textsize(date_text, font=date_font)
-        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=date_font, fill=0)  # Draw date
+        # Draw date
+        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=date_font, fill=0)
         time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
         text2_w, text2_h = Image_Draw.textsize(time_text, font=time_font)
-        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15), time_text, font=time_font, fill=0)  # Draw time
+        # Draw time
+        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15),
+                        time_text, font=time_font, fill=0)
         # Draw a widget for the Alarm
         activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
         if "1" in activated:
@@ -122,13 +125,14 @@ class Display():
 
         date_font = font(self.font_teko, 24, 'Medium')
 
-        Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)  # Separator bottom
+        # Separator bottom
+        Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)
 
         start_day = datetime(2000, 1, 1, 5)
         end_day = datetime(2000, 1, 1, 22)
         weather_data = {}
         for index, data in enumerate(get_weather_data()):
-            time_datetime = datetime.strptime(data["dt_txt"],'%Y-%m-%d %H:%M:%S')
+            time_datetime = datetime.strptime(data["dt_txt"], '%Y-%m-%d %H:%M:%S')
             date_str = str(time_datetime.date())
 
             if time_datetime.time() > end_day.time() or time_datetime.time() < start_day.time():
@@ -136,16 +140,23 @@ class Display():
             if date_str not in weather_data.keys():
                 weather_data[date_str] = data
             else:
-                weather_data[date_str]["main"]["temp_min"] = min(data["main"]["temp_min"], weather_data[date_str]["main"]["temp_min"])
-                weather_data[date_str]["main"]["temp_max"] = max(data["main"]["temp_max"], weather_data[date_str]["main"]["temp_max"])
+                temp_min = min(data["main"]["temp_min"], weather_data[date_str]["main"]["temp_min"])
+                weather_data[date_str]["main"]["temp_min"] = temp_min
+                temp_max = max(data["main"]["temp_max"], weather_data[date_str]["main"]["temp_max"])
+                weather_data[date_str]["main"]["temp_max"] = temp_max
         for index_day, day in enumerate(weather_data):
             pos_x = layout_w[0]+80*index_day
-            date = datetime.strptime(day,'%Y-%m-%d')
-            date_text = ("Today" if now.date() == date.date() else cut_text_to_length(Image_Draw, date.strftime('%A'), date_font, 55, 5))
-            draw_text_angle(Image_Draw, Image_global, (pos_x+4,0), date_text, date_font, 90)
-            for index_part, prop in enumerate(["temp_min","temp_max"]):
+            date = datetime.strptime(day, '%Y-%m-%d')
+            if now.date() == date.date():
+                date_text = "Today"
+            else:
+                date_text = cut_text_to_length(Image_Draw, date.strftime('%A'), date_font, 55, 5)
+            draw_text_angle(Image_Draw, Image_global, (pos_x+4, 0), date_text, date_font, 90)
+            for index_part, prop in enumerate(["temp_min", "temp_max"]):
                 pos_y = index_part*30
-                Image_Draw.text((pos_x + 30, pos_y), f'{round(weather_data[day]["main"][prop])}°', font=font(self.font_teko, 26, 'Medium'), fill=0)
+                Image_Draw.text((pos_x + 30, pos_y),
+                                f'{round(weather_data[day]["main"][prop])}°',
+                                font=font(self.font_teko, 26, 'Medium'), fill=0)
 
     def draw_calendar(self, Image_Draw, Image_global):
         self.happening_events = []
@@ -201,7 +212,8 @@ class Display():
                                   event_h_half, 255, '1101')
                 Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             else:
-                Image_Draw.line((layout_w[0]+1, pos_y+event_h_half, layout_w[0]+1, pos_y+evt_nb*event_h),
+                Image_Draw.line((layout_w[0]+1,
+                                 pos_y+event_h_half, layout_w[0]+1, pos_y+evt_nb*event_h),
                                 fill=fillin)  # draw vertical line for all event of the day
 
             for index, event in enumerate(events_sorted[event_category]):
@@ -245,7 +257,8 @@ class Display():
         task_h_half = int(task_h/2)
         # Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
         title_char = 8
-        tasks = json.loads(open("/home/pi/AlarmClockProject/AlarmClock/cache/ggtasks/tasks.json", "r").read())
+        json_file = "/home/pi/AlarmClockProject/AlarmClock/cache/ggtasks/tasks.json"
+        tasks = json.loads(open(json_file, "r").read())
         pos_y = layout_h[0]
         pos_x = layout_w[0] + 4
         for task_list_title in tasks:
