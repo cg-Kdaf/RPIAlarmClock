@@ -2,7 +2,7 @@
 import epd7in5_V2
 import logging
 import json
-from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps
+from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps, ImageChops
 from datetime import datetime, timedelta
 from calendars import get_calendar_sorted
 from weather import get_weather_data
@@ -75,7 +75,7 @@ class Display():
         logging.info("Creating EPD (ElectronicPaperDisplay) object")
         self.ring_icon = Image_class.open('data/bell.bmp')
         self.homework_icon = Image_class.open('data/homework.bmp')
-        self.image_bike = Image_class.open('data/image_bike2.bmp')
+        self.image_bike = Image_class.open('data/image_bike.bmp')
 
         self.font_weather = 'data/weather_font.ttf'
         self.font_teko = ['data/Teko/Teko.ttf',
@@ -158,7 +158,7 @@ class Display():
         event_h = 28
         event_h_half = int(event_h/2)
         date_w = 58
-        sum_char = 18
+        sum_char = 14
         events_number = int((layout_h[1] - layout_h[0]) / event_h)+1
         events = get_calendar_sorted(range(2), get_ed=True)[:events_number]
         events_sorted = {}

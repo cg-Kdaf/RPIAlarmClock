@@ -15,8 +15,8 @@ def str_to_datetime(date_str):
         datetime_time = datetime(int(date_str[:4]),  # Year
                                  int(date_str[5:7]),  # Month
                                  int(date_str[8:10]),  # Day
-                                 int(date_str[11:13]),  # Hour
-                                 int(date_str[14:16]))  # Minute
+                                 int(date_str[11:13]) % 24,  # Hour
+                                 int(date_str[14:16]) % 60)  # Minute
     else:
         datetime_time = datetime(int(date_str[:4]),  # Year
                                  int(date_str[5:7]),  # Month
@@ -73,7 +73,8 @@ def store_calendar():
 
 
 def get_calendar():
-    events = json.loads(open(cache_file, "r").read())
+    with open(cache_file, "r") as json_file:
+        events = json.load(json_file)
     return events
 
 

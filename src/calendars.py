@@ -173,13 +173,14 @@ def get_event_from_text(file_index, exclude_passed=True):
 
 
 def get_ED_calendar():
-    from ED_utilities import get_calendar, str_to_datetime, datetime_now
+    from ED_utilities import get_calendar, str_to_datetime as str_to_datetime_ed
+    datetime_now = datetime.now()
 
     events = get_calendar()
     events_filtered = []
     for event in events:
-        event["DTSTART"] = str_to_datetime(event["DTSTART"])
-        event["DTEND"] = str_to_datetime(event["DTEND"])
+        event["DTSTART"] = str_to_datetime_ed(event["DTSTART"])
+        event["DTEND"] = str_to_datetime_ed(event["DTEND"])
         event["STATUS"] = 0
         event["STATUS"] += event["DTSTART"] < datetime_now
         event["STATUS"] += event["DTEND"] < datetime_now
