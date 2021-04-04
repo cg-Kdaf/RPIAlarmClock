@@ -36,7 +36,7 @@ def get_ed_data():
     global homeworks, calendar, notes
     from EcoleDirect import EcoleDirect
 
-    file_path = f"/home/pi/credentials/EcoleDirecte/credentials.txt"
+    file_path = "/home/pi/credentials/EcoleDirecte/credentials.txt"
     # file as following : 'id:user\npwd:password
     creds = open(file_path, "r").read().split("\n")
     user = creds[0].split(':')[1]
@@ -103,7 +103,7 @@ def get_latest_notes():
         note_max = float(note['noteSur'].replace(",", "."))
         class_avg = float(note['moyenneClasse'].replace(",", "."))
         better_than_class = individual_note > class_avg
-        print(individual_note, note_max, class_avg, better_than_class)
+
         note_display = (float_to_str(individual_note)
                         + ('+' if better_than_class else '-')
                         + (float_to_str(note_max) if note_max != 20.0 else "")
@@ -111,12 +111,10 @@ def get_latest_notes():
         if not note['codeMatiere'] in notes_by_subject.keys():
             notes_by_subject[note['codeMatiere']] = ""
         notes_by_subject[note['codeMatiere']] += note_display
-        print(note_display)
 
     for note_subject in notes_by_subject.keys():
         note = notes_by_subject[note_subject]
         news_desc += f"\n{note_subject} : {note}"
-    print(news_desc)
     add_news(300, datetime_now, 'Latest notes', news_desc)
 
 
