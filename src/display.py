@@ -7,8 +7,18 @@ from datetime import datetime, timedelta
 from calendars import get_calendar_sorted
 from weather import get_weather_data
 from news_utilities import get_news
+from music_commands import Music_lib
+from os import system as os_system
 
 # logging.basicConfig(level=logging.DEBUG)
+
+
+def device_status():
+    response = os_system("ping -A -q -w 1 " + "kdaf" + '> /dev/null')
+    computer = int(response) == 0
+    response = os_system("ping -A -q -w 1 " + phone_ip + '> /dev/null')
+    phone = int(response) == 0
+    return (computer, phone)
 
 
 def add_tuple(tuple1, tuple2):
@@ -112,13 +122,6 @@ class Display():
 
         now = datetime.now()  # +timedelta(minutes=round((self.interval/60-1)/2))
 
-        # Draw a widget for the Alarm
-        is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
-        alarm_size = 0
-        if "1" in is_alarm_on:
-            alarm_size = 30
-            Image_global.paste(self.ring_icon, (layout_w[0], layout_h[0]))
-
         # Draw date
         date_text = now.strftime("%-m%b")  # Date as 1Jan
         text1_w, text1_h = Image_Draw.textsize(date_text, font=date_font)
@@ -134,12 +137,12 @@ class Display():
         # Draw time
         time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
         text3_w, text3_h = Image_Draw.textsize(time_text, font=time_font)
-        Image_Draw.text(((layout_w[0]+alarm_size+layout_w[1]-text1_w-text3_w)/2, layout_h[0]-15),
+        Image_Draw.text(((layout_w[0]+layout_w[1]-text1_w-text3_w)/2, layout_h[0]-15),
                         time_text, font=time_font, fill=0)
 
     def draw_weather(self, Image_Draw, Image_global):
         now = datetime.now()
-        layout_w = (330, 800)
+        layout_w = (480, 800)
         layout_h = (0, 60)
 
         date_font = font(self.font_teko, 24, 'Medium')
@@ -371,13 +374,87 @@ class Display():
                     add_tuple(rectangle1_pos, rectangle1_size)[1]+4)
         Image_Draw.text(text_pos, date_text, fill=0, anchor="lt", font=date_font)
 
+    def draw_music_devices_status(self, Image_Draw, Image_global):
+        layout_w = (330, 480)
+        layout_h = (0, 60)
+
+        font_music = font(self.font_teko, 26, 'Medium')
+
+        # Separator bottom
+        Image_Draw.line((layout_w[0], layout_h[1], layout_w[1], layout_h[1]), width=4, fill=0)
+        # Separator right
+        Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
+
+        mocp = Music_lib()
+        infos = mocp.get_status_mocp()
+        if infos == {}:
+            return
+        if infos['State'] == 'PAUSE':  # Add a Pause icon
+            rectangle1_pos = add_tuple((layout_w[0], layout_h[0]), (8, 3))
+            rectangle1_size = (5, 24)
+            back_rectangle, mask = round_rect(rectangle1_size, 2, 0)
+            Image_global.paste(back_rectangle, rectangle1_pos, mask)
+
+            rectangle1_pos = add_tuple(rectangle1_pos, (12, 0))
+            back_rectangle, mask = round_rect(rectangle1_size, 2, 0)
+            Image_global.paste(back_rectangle, rectangle1_pos, mask)
+        else:  # Add a Play icon
+            point1 = add_tuple((layout_w[0], layout_h[0]), (8, 3))
+            point2 = add_tuple(point1, (0, 24))
+            point3 = add_tuple((layout_w[0], layout_h[0]), (20, 3+12))
+            Image_Draw.polygon([point1, point2, point3], fill=0)
+
+        text_pos = (layout_w[0]+30, layout_h[0]-2)
+        song_title = infos['SongTitle'].split("(")[0]
+        text_length = layout_w[1]-30-text_pos[0]
+        song_title = cut_text_to_length(Image_Draw, song_title, font_music, text_length, 6)
+        Image_Draw.text(text_pos, song_title, fill=0, anchor="la", font=font_music)
+
+        # Draw a widget for the Alarm
+        is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
+        alarm_status = "Alarm OFF"
+        if "1" in is_alarm_on:
+            Image_global.paste(self.ring_icon, (layout_w[0]+3, layout_h[1]-30))
+            alarm_status = "Alarm ON"
+        text_pos = add_tuple(text_pos, (3, 28))
+        Image_Draw.text(text_pos, alarm_status, fill=0, anchor="la", font=font_music)
+        is_computer, is_phone = device_status()
+        print(is_computer, is_phone)
+        if is_phone:
+            rectangle_pos = add_tuple((layout_w[1], layout_h[0]), (-22, 2))
+            rectangle_size = (14, 26)
+            back_rectangle, mask = round_rect(rectangle_size, 3, 0)
+            Image_global.paste(back_rectangle, rectangle_pos, mask)
+
+            rectangle_pos = add_tuple(rectangle_pos, (3, 3))
+            rectangle_size = (8, 20)
+            back_rectangle, mask = round_rect(rectangle_size, 2, 255)
+            Image_global.paste(back_rectangle, rectangle_pos, mask)
+        if is_computer:
+            rectangle_pos = add_tuple((layout_w[1], layout_h[0]), (-28, 32))
+            rectangle_size = (26, 18)
+            back_rectangle, mask = round_rect(rectangle_size, 3, 0)
+            Image_global.paste(back_rectangle, rectangle_pos, mask)
+
+            rectangle_pos = add_tuple(rectangle_pos, (3, 3))
+            rectangle_size = (20, 12)
+            back_rectangle, mask = round_rect(rectangle_size, 2, 255)
+            Image_global.paste(back_rectangle, rectangle_pos, mask)
+
+            rectangle_pos = add_tuple((layout_w[1], layout_h[0]), (-20, 32+18))
+            rectangle_size = (10, 6)
+            back_rectangle, mask = round_rect(rectangle_size, 3, 0)
+            Image_global.paste(back_rectangle, rectangle_pos, mask)
+
     def refresh(self):
         logging.info("Initialising display")
         self.epd.init()
         logging.info("Computing image")
         Image = Image_class.new('1', (self.epd.width, self.epd.height), 255)  # 255: clear the frame
         Draw = ImageDraw.Draw(Image)
-        display_func = [self.draw_weather,
+        display_func = [
+                        self.draw_weather,
+                        self.draw_music_devices_status,
                         self.draw_time,
                         # self.draw_image,
                         self.draw_calendar,

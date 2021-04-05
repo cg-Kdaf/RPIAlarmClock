@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from os import system as execute_shell
-from os import system as os_system
+from subprocess import check_output
 import logging
 
 
@@ -10,11 +10,22 @@ class Music_lib():
 
     def is_mocp(self):
         if not self.is_mocp_on:
-            pid = os_system('pgrep mocp')
+            pid = int(check_output(['pgrep', 'mocp']).decode('utf-8').splitlines()[0])
             self.is_mocp_on = pid != 256
             return pid != 256
         else:
             return True
+
+    def get_status_mocp(self):
+        if self.is_mocp():
+            infos = check_output(['mocp', '-i']).decode('utf-8').splitlines()[:-1]
+            infos_dict = {}
+            for info in infos:
+                info = info.split(": ")
+                infos_dict[info[0]] = info[1]
+            return infos_dict
+        else:
+            return {}
 
     def start_mocp(self):
         if not self.is_mocp():
@@ -48,6 +59,7 @@ class Music_lib():
     def exit_mocp(self):
         if self.is_mocp():
             execute_shell('mocp --exit')
+            self.is_mocp_on = False
 
     def queue_add_mocp(self, file_path):
         if self.is_mocp():
