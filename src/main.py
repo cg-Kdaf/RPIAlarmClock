@@ -19,22 +19,20 @@ def is_computer_on(host="kdaf"):
 
 
 def invert_display():
-    computer = is_computer_on()
-    day = '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000'
-    if computer or day:
-        return False
-    else:
+    str_time = str(datetime.now().time())
+    is_sleep_time = not '05:30:00.000000' < str_time < '23:00:00.000000'
+    is_night_time = not '08:00:00.000000' < str_time < '20:00:00.000000'
+    if is_sleep_time or (is_night_time and not is_computer_on):
         return True
+    else:
+        return False
 
 
 def time_refresh():
-    in_event_freeze = any(event['CAL_ID'] in cal_freeze for event in EPDisplay.happening_events)
-    if in_event_freeze:
-        return 3600
-    elif '06:00:00.000000' < str(datetime.now().time()) < '20:00:00.000000':
-        return 180
-    else:
+    if invert_display():
         return 1200
+    else:
+        return 180
 
 
 def cleaning():  # Put here what to stop when program end
@@ -72,8 +70,7 @@ try:
     signal.signal(signal.SIGINT, Interruption)
     signal.signal(signal.SIGUSR1, User1)
 
-    from time import time as time_time, sleep as time_sleep
-    starttime = time_time()
+    from time import sleep as time_sleep
 
     logging.info("Program starts")
     EPDisplay = Display()
@@ -82,7 +79,10 @@ try:
         refresh_time = time_refresh()
         refresh_screen(refresh_time)
         logging.info(f"Refresh every {refresh_time} sec")
-        time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)
+        minutes_to_sleep = (3600-datetime.now().minute*60) % refresh_time
+        if minutes_to_sleep == 0:
+            minutes_to_sleep = refresh_time
+        time_to_sleep = minutes_to_sleep - datetime.now().second
         time_sleep(time_to_sleep)
 
 except Exception as e:

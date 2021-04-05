@@ -110,7 +110,7 @@ class Display():
         # Separator right
         Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
 
-        now = datetime.now()+timedelta(minutes=1)
+        now = datetime.now()  # +timedelta(minutes=round((self.interval/60-1)/2))
 
         # Draw a widget for the Alarm
         is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
