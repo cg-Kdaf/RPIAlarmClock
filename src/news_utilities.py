@@ -24,6 +24,15 @@ def add_news(index, date, title, desc):
         json.dump(news, jsonfile, ensure_ascii=False, indent=4)
 
 
+def rm_news(index):
+    news = get_news()
+    if not isinstance(news, dict):
+        news = {}
+    news.pop(str(index), None)
+    with open(cache_file, 'w') as jsonfile:
+        json.dump(news, jsonfile, ensure_ascii=False, indent=4)
+
+
 def get_news():
     datetime_now = datetime.now()
     data = None

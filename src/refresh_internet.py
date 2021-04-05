@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 from os import listdir
 
 from calendars import get_calendar_sorted
-from news_utilities import add_news
+from news_utilities import add_news, rm_news
 
 refresh_offline = 6
 refresh_online = 20
+alarm_news_index = 25
 alarm_activated = True  # This is to know when to delete the alarms: only first time if is off
 ring_program = "python3 /home/pi/AlarmClockProject/AlarmClock/src/sound.py"
 
@@ -55,6 +56,7 @@ def refresh_alarms():
                 print(alarm_id)
                 system_commands.remove_program_at(int(alarm_id))
         alarm_activated = False
+        rm_news(alarm_news_index)
 
     if alarm_activated:  # Adding a piece of news for the upcomming alarm
         datetime_start = alarms[0]['DTSTART']
@@ -67,11 +69,12 @@ def refresh_alarms():
             date_str_start = datetime_start.strftime('%d%b')
         date_str_start += datetime_start.strftime('  %H:%M')
         date_str_start += '\n Music : ' + ''.join(first_music.split('.')[:-1])
-        add_news(25, datetime.now(), 'Upcomming alarm', date_str_start)
+        add_news(alarm_news_index, datetime.now(), 'Upcomming alarm', date_str_start)
 
     used_alarms = []
     if "1" in activated:
         if alarms == []:
+            rm_news(alarm_news_index)
             return
         for alarm in alarms:
             if alarm["STATUS"] == 1:
