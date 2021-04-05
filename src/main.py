@@ -45,6 +45,7 @@ def refresh_screen(refresh_time=0):
         return
     is_refreshing = True
     EPDisplay.invert = invert_display()
+    EPDisplay.minimal = EPDisplay.invert
     system_commands.set_pwr_led(1)
 
     logging.info(f"\nRefresh{datetime.now()}")

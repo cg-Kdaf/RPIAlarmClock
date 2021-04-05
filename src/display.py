@@ -337,8 +337,8 @@ class Display():
     def draw_minimal(self, Image_Draw, Image_global):
         layout_w = (0, 800)
         layout_h = (0, 480)
-        time_font = font(self.font_orbitron, 180, 'Regular')
-        date_font = font(self.font_orbitron, 32, 'SemiBold')
+        time_font = font(self.font_orbitron, 200, 'Regular')
+        date_font = font(self.font_orbitron, 48, 'SemiBold')
 
         now = datetime.now()+timedelta(minutes=1)
 
@@ -370,9 +370,30 @@ class Display():
         # Draw date
         date_text = now.strftime("%A %-m %B %G")  # Date as 1Jan
         text_w, text_h = Image_Draw.textsize(date_text, font=date_font)
-        text_pos = (int((layout_w[0]+layout_w[1]-text_w)/2),
+        text_pos = (int((layout_w[0]+layout_w[1])/2),
                     add_tuple(rectangle1_pos, rectangle1_size)[1]+4)
-        Image_Draw.text(text_pos, date_text, fill=0, anchor="lt", font=date_font)
+        Image_Draw.text(text_pos, date_text, fill=0, anchor="mt", font=date_font)
+
+        # Draw music status
+        mocp = Music_lib()
+        infos = mocp.get_status_mocp()
+        if infos == {}:
+            return
+        song_title = infos['SongTitle'].split("(")[0] + ' // ' + infos['Artist']
+        song_title = cut_text_to_length(Image_Draw, song_title, date_font, 150, 6)
+        text_w, text_h = Image_Draw.textsize(song_title, font=date_font)
+        text_pos = add_tuple(text_pos, (0, 40))
+        Image_Draw.text(text_pos, song_title, fill=0, anchor="mt", font=date_font)
+
+        # Draw a widget for the Alarm
+        is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
+        if "1" in is_alarm_on:
+            alarm_status = "Alarm ON"
+        else:
+            alarm_status = "Alarm OFF"
+        text_w, text_h = Image_Draw.textsize(alarm_status, font=date_font)
+        text_pos = add_tuple(text_pos, (0, 40))
+        Image_Draw.text(text_pos, alarm_status, fill=0, anchor="mt", font=date_font)
 
     def draw_music_devices_status(self, Image_Draw, Image_global):
         layout_w = (330, 480)
@@ -419,7 +440,6 @@ class Display():
         text_pos = add_tuple(text_pos, (3, 28))
         Image_Draw.text(text_pos, alarm_status, fill=0, anchor="la", font=font_music)
         is_computer, is_phone = device_status()
-        print(is_computer, is_phone)
         if is_phone:
             rectangle_pos = add_tuple((layout_w[1], layout_h[0]), (-22, 2))
             rectangle_size = (14, 26)
