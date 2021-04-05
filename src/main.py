@@ -41,7 +41,7 @@ def cleaning():  # Put here what to stop when program end
     EPDisplay.exit()
 
 
-def refresh_screen():
+def refresh_screen(refresh_time=0):
     global is_refreshing
     if is_refreshing:
         return
@@ -51,6 +51,8 @@ def refresh_screen():
 
     logging.info(f"\nRefresh{datetime.now()}")
     system_commands.set_pwr_led(0)
+    if refresh_time != 0:
+        EPDisplay.interval = refresh_time
     EPDisplay.refresh()
     is_refreshing = False
 
@@ -77,8 +79,8 @@ try:
     EPDisplay = Display()
     system_commands.set_pwr_led(0)
     while True:
-        refresh_screen()
         refresh_time = time_refresh()
+        refresh_screen(refresh_time)
         logging.info(f"Refresh every {refresh_time} sec")
         time_to_sleep = refresh_time - ((time_time() - starttime) % refresh_time)
         time_sleep(time_to_sleep)

@@ -90,6 +90,8 @@ class Display():
 
         self.invert = False
 
+        self.interval = 0
+
         self.epd = epd7in5_V2.EPD()
 
     def draw_time(self, Image_Draw, Image_global):
@@ -104,19 +106,31 @@ class Display():
         Image_Draw.line((layout_w[1], layout_h[0], layout_w[1], layout_h[1]), width=2, fill=0)
 
         now = datetime.now()+timedelta(minutes=1)
-        date_text = now.strftime("%A\n%d %b")  # Date as Friday\n01 Jan
-        text1_w, text1_h = Image_Draw.textsize(date_text, font=date_font)
-        # Draw date
-        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=date_font, fill=0)
-        time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
-        text2_w, text2_h = Image_Draw.textsize(time_text, font=time_font)
-        # Draw time
-        Image_Draw.text(((layout_w[1]-text1_w-text2_w)/2, layout_h[0]-15),
-                        time_text, font=time_font, fill=0)
+
         # Draw a widget for the Alarm
-        activated = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
-        if "1" in activated:
-            Image_global.paste(self.ring_icon, (layout_w[1] - 30, layout_h[1] - 30))
+        is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
+        alarm_size = 0
+        if "1" in is_alarm_on:
+            alarm_size = 30
+            Image_global.paste(self.ring_icon, (layout_w[0], layout_h[0]))
+
+        # Draw date
+        date_text = now.strftime("%-m%b")  # Date as 1Jan
+        text1_w, text1_h = Image_Draw.textsize(date_text, font=date_font)
+        Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=date_font, fill=0)
+
+        # Draw interval
+        if self.interval != 0:
+            interval_text = str(int(self.interval/60))+"min"
+            text2_w, text2_h = Image_Draw.textsize(interval_text, font=date_font)
+            Image_Draw.text((layout_w[1]-text2_w, (layout_h[1]+layout_h[0])/2),
+                            interval_text, font=date_font, fill=0)
+
+        # Draw time
+        time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
+        text3_w, text3_h = Image_Draw.textsize(time_text, font=time_font)
+        Image_Draw.text(((layout_w[0]+alarm_size+layout_w[1]-text1_w-text3_w)/2, layout_h[0]-15),
+                        time_text, font=time_font, fill=0)
 
     def draw_weather(self, Image_Draw, Image_global):
         now = datetime.now()
