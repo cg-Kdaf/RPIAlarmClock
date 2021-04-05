@@ -11,6 +11,10 @@ from news_utilities import get_news
 # logging.basicConfig(level=logging.DEBUG)
 
 
+def add_tuple(tuple1, tuple2):
+    return tuple(map(sum, zip(tuple1, tuple2)))
+
+
 def cut_text_to_length(Image_Draw, text_, font_, length, min_char_length):
     char_length_end = min_char_length
     actual_length = 0
@@ -47,16 +51,17 @@ def round_rect(size, radius, fill, corners="1111"):
     """Draw a rounded rectangle"""
     width, height = size
     rectangle = Image_class.new('1', size, fill)
-    corner = round_corner(radius, fill)
+    mask = Image_class.new('1', size, 255)
+    corner = round_corner(radius, 255)
     if corners[0] == '1':
-        rectangle.paste(corner, (0, 0))
+        mask.paste(corner, (0, 0))
     if corners[3] == '1':
-        rectangle.paste(corner.rotate(90), (0, height - radius))  # Rotate the corner and paste it
+        mask.paste(corner.rotate(90), (0, height - radius))  # Rotate the corner and paste it
     if corners[2] == '1':
-        rectangle.paste(corner.rotate(180), (width - radius, height - radius))
+        mask.paste(corner.rotate(180), (width - radius, height - radius))
     if corners[1] == '1':
-        rectangle.paste(corner.rotate(270), (width - radius, 0))
-    return rectangle
+        mask.paste(corner.rotate(270), (width - radius, 0))
+    return rectangle, mask
 
 
 def display_error(Image_Draw, xy, error_str):
@@ -89,8 +94,8 @@ class Display():
         self.happening_events = []
 
         self.invert = False
-
         self.interval = 0
+        self.minimal = False
 
         self.epd = epd7in5_V2.EPD()
 
@@ -211,19 +216,15 @@ class Display():
             if event_category == "Now":
                 fillin = 255
                 fillin_date = 255
-                black_back = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
-                                        event_h_half, 0, '0011')
-                mask = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
-                                  event_h_half, 255, '0011')
+                black_back, mask = round_rect((layout_w[1]-layout_w[0], evt_nb*event_h),
+                                              event_h_half, 0, '0011')
                 Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             elif event_category == "Today":
                 line_horiz_w += date_w-4
                 fillin = 0
                 fillin_date = 255
-                black_back = round_rect((date_w-2, evt_nb*event_h),
-                                        event_h_half, 0, '1101')
-                mask = round_rect((date_w-2, evt_nb*event_h),
-                                  event_h_half, 255, '1101')
+                black_back, mask = round_rect((date_w-2, evt_nb*event_h),
+                                              event_h_half, 0, '1101')
                 Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             else:
                 Image_Draw.line((layout_w[0]+1,
@@ -276,10 +277,8 @@ class Display():
         pos_y = layout_h[0]
         pos_x = layout_w[0] + 4
         for task_list_title in tasks:
-            black_back = round_rect((layout_w[1]-layout_w[0], task_h),
-                                    task_h_half, 0, '1111')
-            mask = round_rect((layout_w[1]-layout_w[0], task_h),
-                              task_h_half, 255, '1111')
+            black_back, mask = round_rect((layout_w[1]-layout_w[0], task_h),
+                                          task_h_half, 0, '1111')
             Image_global.paste(black_back, (layout_w[0], pos_y), mask)
             Image_Draw.text((pos_x+20, pos_y),
                             cut_text_to_length(Image_Draw, task_list_title,
@@ -332,6 +331,46 @@ class Display():
         image_width, image_height = self.image_bike.size
         Image_global.paste(self.image_bike, (800-image_width, 480-image_height))
 
+    def draw_minimal(self, Image_Draw, Image_global):
+        layout_w = (0, 800)
+        layout_h = (0, 480)
+        time_font = font(self.font_orbitron, 180, 'Regular')
+        date_font = font(self.font_orbitron, 32, 'SemiBold')
+
+        now = datetime.now()+timedelta(minutes=1)
+
+        # Draw a widget for the Alarm
+        is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
+        if "1" in is_alarm_on:
+            Image_global.paste(self.ring_icon, (layout_w[0], layout_h[0]))
+
+        # Draw time
+        time_text = now.strftime("%k:%M")  # Time as 14:03 or 3:50
+        text_w, text_h = time_font.getbbox(time_text, anchor="lt")[2:]
+        text_pos = (int((layout_w[0]+layout_w[1]-text_w)/2),
+                    120)
+        text_size = (text_w, text_h)
+
+        rectangle1_pos = add_tuple(text_pos, (-30, -30))
+        rectangle1_size = add_tuple(text_size, (60, 60))
+        back_rectangle, mask = round_rect(rectangle1_size, 40, 0)
+        Image_global.paste(back_rectangle, rectangle1_pos, mask)
+
+        rectangle2_pos = add_tuple(text_pos, (-20, -20))
+        rectangle2_size = add_tuple(text_size, (40, 40))
+        back_rectangle, mask = round_rect(rectangle2_size, 30, 255)
+        Image_global.paste(back_rectangle, rectangle2_pos, mask)
+
+        Image_Draw.text(text_pos,
+                        time_text, fill=0, anchor="lt", font=time_font)
+
+        # Draw date
+        date_text = now.strftime("%A %-m %B %G")  # Date as 1Jan
+        text_w, text_h = Image_Draw.textsize(date_text, font=date_font)
+        text_pos = (int((layout_w[0]+layout_w[1]-text_w)/2),
+                    add_tuple(rectangle1_pos, rectangle1_size)[1]+4)
+        Image_Draw.text(text_pos, date_text, fill=0, anchor="lt", font=date_font)
+
     def refresh(self):
         logging.info("Initialising display")
         self.epd.init()
@@ -345,6 +384,8 @@ class Display():
                         self.draw_tasks,
                         self.draw_news,
                         ]
+        if self.minimal:
+            display_func = [self.draw_minimal]
         error_lines = 0
         for function in display_func:
             try:
