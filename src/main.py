@@ -13,7 +13,7 @@ cal_freeze = [200]
 is_refreshing = False
 
 
-def is_computer_on(host="kdaf"):
+def is_computer_on(host="192.168.1.42"):
     response = os_system("ping -A -q -w 1 " + host + '> /dev/null')
     return (int(response) == 0)
 
@@ -22,7 +22,7 @@ def invert_display():
     str_time = str(datetime.now().time())
     is_sleep_time = not '05:30:00.000000' < str_time < '23:00:00.000000'
     is_night_time = not '08:00:00.000000' < str_time < '20:00:00.000000'
-    if is_sleep_time or (is_night_time and not is_computer_on):
+    if is_sleep_time or (is_night_time and not is_computer_on()):
         return True
     else:
         return False

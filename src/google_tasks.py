@@ -35,9 +35,9 @@ def get_task_lists():
     # Call the Tasks API
     tasklists = service.tasklists().list().execute()
     tasks = {}
-    for tasklist in tasklists.get('items'):
+    for tasklist in sorted(tasklists.get('items'), key=lambda item: item["title"]):
         index = tasklist.get('id')
-        title = tasklist.get('title')
+        title = tasklist.get('title')[4:]
         tasks[title] = {}
         tasks_list = service.tasks().list(tasklist=index).execute().get('items')
         parents = []

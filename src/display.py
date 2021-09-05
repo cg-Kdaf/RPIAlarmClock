@@ -10,11 +10,13 @@ from news_utilities import get_news
 from music_commands import Music_lib
 from os import system as os_system
 
+
+phone_ip = '192.168.1.41'
 # logging.basicConfig(level=logging.DEBUG)
 
 
 def device_status():
-    response = os_system("ping -A -q -w 1 " + "kdaf" + '> /dev/null')
+    response = os_system("ping -A -q -w 1 " + "192.168.1.42" + '> /dev/null')
     computer = int(response) == 0
     response = os_system("ping -A -q -w 1 " + phone_ip + '> /dev/null')
     phone = int(response) == 0
@@ -123,7 +125,7 @@ class Display():
         now = datetime.now()  # +timedelta(minutes=round((self.interval/60-1)/2))
 
         # Draw date
-        date_text = now.strftime("%-m%b")  # Date as 1Jan
+        date_text = now.strftime("%-d%b")  # Date as 1Jan
         text1_w, text1_h = Image_Draw.textsize(date_text, font=date_font)
         Image_Draw.text((layout_w[1]-text1_w, layout_h[0]), date_text, font=date_font, fill=0)
 
@@ -340,7 +342,7 @@ class Display():
         time_font = font(self.font_orbitron, 200, 'Regular')
         date_font = font(self.font_orbitron, 48, 'SemiBold')
 
-        now = datetime.now()+timedelta(minutes=1)
+        now = datetime.now()
 
         # Draw a widget for the Alarm
         is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
@@ -368,7 +370,7 @@ class Display():
                         time_text, fill=0, anchor="lt", font=time_font)
 
         # Draw date
-        date_text = now.strftime("%A %-m %B %G")  # Date as 1Jan
+        date_text = now.strftime("%A %-d %B %G")  # Date as Monday 1 Jan 2000
         text_w, text_h = Image_Draw.textsize(date_text, font=date_font)
         text_pos = (int((layout_w[0]+layout_w[1])/2),
                     add_tuple(rectangle1_pos, rectangle1_size)[1]+4)
@@ -377,16 +379,20 @@ class Display():
         # Draw music status
         mocp = Music_lib()
         infos = mocp.get_status_mocp()
-        if infos == {}:
-            return
-        song_title = infos['SongTitle'].split("(")[0] + ' // ' + infos['Artist']
-        song_title = cut_text_to_length(Image_Draw, song_title, date_font, 150, 6)
-        text_w, text_h = Image_Draw.textsize(song_title, font=date_font)
+        if infos != {}:
+            if 'SongTitle' in infos.keys():
+                music_text = f"{infos['SongTitle'].split('(')[0]} // {infos['Artist']}"
+            else:
+                music_text = "Music stopped"
+            if infos['State'] == 'PAUSE':
+                music_text += ' / PAUSED'
+        else:
+            music_text = "Mocp not running"
+        text_w, text_h = Image_Draw.textsize(music_text, font=date_font)
         text_pos = add_tuple(text_pos, (0, 40))
-        Image_Draw.text(text_pos, song_title, fill=0, anchor="mt", font=date_font)
+        Image_Draw.text(text_pos, music_text, fill=0, anchor="mt", font=date_font)
 
         # Draw a widget for the Alarm
-        is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
         if "1" in is_alarm_on:
             alarm_status = "Alarm ON"
         else:
@@ -408,28 +414,36 @@ class Display():
 
         mocp = Music_lib()
         infos = mocp.get_status_mocp()
-        if infos == {}:
-            return
-        if infos['State'] == 'PAUSE':  # Add a Pause icon
-            rectangle1_pos = add_tuple((layout_w[0], layout_h[0]), (8, 3))
-            rectangle1_size = (5, 24)
-            back_rectangle, mask = round_rect(rectangle1_size, 2, 0)
-            Image_global.paste(back_rectangle, rectangle1_pos, mask)
+        if infos != {}:
+            if infos['State'] == 'PAUSE':  # Add a Pause icon
+                rectangle1_pos = add_tuple((layout_w[0], layout_h[0]), (8, 3))
+                rectangle1_size = (5, 24)
+                back_rectangle, mask = round_rect(rectangle1_size, 2, 0)
+                Image_global.paste(back_rectangle, rectangle1_pos, mask)
 
-            rectangle1_pos = add_tuple(rectangle1_pos, (12, 0))
-            back_rectangle, mask = round_rect(rectangle1_size, 2, 0)
-            Image_global.paste(back_rectangle, rectangle1_pos, mask)
-        else:  # Add a Play icon
-            point1 = add_tuple((layout_w[0], layout_h[0]), (8, 3))
-            point2 = add_tuple(point1, (0, 24))
-            point3 = add_tuple((layout_w[0], layout_h[0]), (20, 3+12))
-            Image_Draw.polygon([point1, point2, point3], fill=0)
+                rectangle1_pos = add_tuple(rectangle1_pos, (12, 0))
+                back_rectangle, mask = round_rect(rectangle1_size, 2, 0)
+                Image_global.paste(back_rectangle, rectangle1_pos, mask)
+            elif infos['State'] == 'PLAY':  # Add a Play icon
+                point1 = add_tuple((layout_w[0], layout_h[0]), (8, 3))
+                point2 = add_tuple(point1, (0, 24))
+                point3 = add_tuple((layout_w[0], layout_h[0]), (20, 3+12))
+                Image_Draw.polygon([point1, point2, point3], fill=0)
+            else:
+                rectangle1_pos1 = add_tuple((layout_w[0], layout_h[0]), (8, 6))
+                rectangle1_pos2 = add_tuple((layout_w[0], layout_h[0]), (25, 23))
+                Image_Draw.rectangle([rectangle1_pos1, rectangle1_pos2], fill=0)
+            if 'SongTitle' in infos.keys():
+                music_text = infos['SongTitle'].split("(")[0]
+            else:
+                music_text = "Music stopped"
+        else:
+            music_text = "Mocp not running"
 
         text_pos = (layout_w[0]+30, layout_h[0]-2)
-        song_title = infos['SongTitle'].split("(")[0]
         text_length = layout_w[1]-30-text_pos[0]
-        song_title = cut_text_to_length(Image_Draw, song_title, font_music, text_length, 6)
-        Image_Draw.text(text_pos, song_title, fill=0, anchor="la", font=font_music)
+        music_text = cut_text_to_length(Image_Draw, music_text, font_music, text_length, 6)
+        Image_Draw.text(text_pos, music_text, fill=0, anchor="la", font=font_music)
 
         # Draw a widget for the Alarm
         is_alarm_on = open("/home/pi/AlarmClockProject/AlarmClock/cache/alarm_status", "r").read()
@@ -494,9 +508,9 @@ class Display():
                 print(error_message)
         if self.invert:
             Image = ImageOps.mirror(Image)  # Mirror image in horizontal axis
-            # Image = Image.convert('L')  # Convert image to something invertable
-            # Image = ImageOps.invert(Image)  # Invert BW image
-            # Image = Image.convert('1')  # convert back to BlackWhite
+            Image = Image.convert('L')  # Convert image to something invertable
+            Image = ImageOps.invert(Image)  # Invert BW image
+            Image = Image.convert('1')  # convert back to BlackWhite
         logging.info("Sending image to display")
         self.epd.display(self.epd.getbuffer(Image))
         logging.info("Sleeping")

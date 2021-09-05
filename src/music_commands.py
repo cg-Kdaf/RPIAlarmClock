@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from os import system as execute_shell
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 import logging
 
 
@@ -10,15 +10,18 @@ class Music_lib():
 
     def is_mocp(self):
         if not self.is_mocp_on:
-            pid = int(check_output(['pgrep', 'mocp']).decode('utf-8').splitlines()[0])
-            self.is_mocp_on = pid != 256
-            return pid != 256
+            try:
+                pid = int(check_output(['pgrep', 'mocp']).decode('utf-8').splitlines()[0])
+                self.is_mocp_on = pid != 256
+                return pid != 256
+            except CalledProcessError:
+                return False
         else:
             return True
 
     def get_status_mocp(self):
         if self.is_mocp():
-            infos = check_output(['mocp', '-i']).decode('utf-8').splitlines()[:-1]
+            infos = check_output(['mocp', '-i']).decode('utf-8').splitlines()
             infos_dict = {}
             for info in infos:
                 info = info.split(": ")
