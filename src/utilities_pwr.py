@@ -11,30 +11,14 @@ from refresh_internet import refresh_alarms, refresh_internet
 This file is separated from others, to evoid errors.
 If the main.py get an error, this script will not stop,
     so I'll be able to turnoff RPi without having to disconect cable or doing it via ssh
+    Buttons are connected to the pins given in BUTTON_GPIOx and they are connected on the other side to the 3.3V via a resistor of 10KOhms
 """
 
-
 BUTTON_GPIO1 = 26
-BUTTON_GPIO2 = 19
+BUTTON_GPIO2 = 13
 music = Music_lib()
 
-
-def signal_handler(sig, frame):
-    print("Exiting")
-    GPIO.cleanup()
-    sys.exit(0)
-
-
-def button_callback(channel):
-    press_start = time_time()
-    while True:
-        if GPIO.input(channel):
-            time_sleep(.05)
-            if GPIO.input(channel):
-                break
-    press_duration = time_time() - press_start
-    if press_duration < .1:
-        return
+def button_callback(channel, press_duration):
     print(press_duration, channel)
     if channel == BUTTON_GPIO1:
         if 5 < press_duration < 10:  # Long press for shutdown
@@ -88,11 +72,35 @@ def button_callback(channel):
 
 if __name__ == '__main__':
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(BUTTON_GPIO1, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(BUTTON_GPIO2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(BUTTON_GPIO1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.setup(BUTTON_GPIO2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-    GPIO.add_event_detect(BUTTON_GPIO1, GPIO.FALLING, callback=button_callback)
-    GPIO.add_event_detect(BUTTON_GPIO2, GPIO.FALLING, callback=button_callback)
+    try:
+        while True:
+            time_sleep(.05)
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.pause()
+            if GPIO.input(BUTTON_GPIO1):
+                time_start = time_time()
+                time_sleep(.05)
+                if not GPIO.input(BUTTON_GPIO1):
+                    continue
+                while True:
+                    time_sleep(.05)
+                    if not GPIO.input(BUTTON_GPIO1):
+                        button_callback(BUTTON_GPIO1, time_time() - time_start)
+                        break
+
+            if GPIO.input(BUTTON_GPIO2):
+                time_start = time_time()
+                time_sleep(.05)
+                if not GPIO.input(BUTTON_GPIO2):
+                    continue
+                while True:
+                    time_sleep(.05)
+                    if not GPIO.input(BUTTON_GPIO2):
+                        button_callback(BUTTON_GPIO2, time_time() - time_start)
+                        break
+    except KeyboardInterrupt:
+        print("Exiting")
+        GPIO.cleanup()
+        sys.exit(0)
