@@ -3,7 +3,7 @@ import epd7in5_V2
 import logging
 import json
 from PIL import Image as Image_class, ImageDraw, ImageFont, ImageOps
-from datetime import datetime, timedelta
+from datetime import datetime
 from calendars import get_calendar_sorted
 from weather import get_weather_data
 from news_utilities import get_news

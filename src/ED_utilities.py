@@ -68,6 +68,8 @@ def store_calendar():
             todo = True
         else:
             todo = False
+        if summary == '':
+            continue
         event = {'DTSTART': dtstart,
                  'DTEND': dtend,
                  'SUMMARY': summary,
