@@ -168,6 +168,8 @@ def get_event_from_text(file_index, exclude_passed=True):
         event["STATUS"] += event["DTEND"] < datetime_now
         if event["STATUS"] == 2:
             continue
+        if isinstance(event["SUMMARY"], list):
+            event["SUMMARY"] = event["SUMMARY"][0]
         events_comming.append(event)
     return events_comming
 
