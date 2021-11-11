@@ -2,6 +2,7 @@
 from os import system as execute_shell
 from subprocess import check_output
 from time import sleep as time_sleep
+from datetime import datetime
 
 
 def set_pwr_led(status):
@@ -52,9 +53,16 @@ def start_programm_at(program, time_, return_id=False):
 
 
 def list_program_at(id_only=False):
-    """Return list of indexes of running prog at"""
+    """Return list of indexes of running prog at
+    example of elt : ['193', 'Wed', 'Oct', '6', '06:15:00', '2021', 'a', 'pi', time]
+    """
     processes = check_output(["atq"]).decode('utf-8').split("\n")[:-1]
     processes = [process.replace("\t", " ").replace("  ", " ").split(" ") for process in processes]
+    if 1:  # Sort them
+        for process in processes:
+            date = datetime.strptime("".join(process[1:6]), "%a%b%d%H:%M:%S%Y")
+            process.append(date)
+        processes.sort(key=(lambda process: process[-1]))
     if id_only:
         processes = [process[0] for process in processes]
     return processes

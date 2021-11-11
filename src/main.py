@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import signal
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from display import Display
 import system_commands
 from os import system as os_system
@@ -10,6 +10,7 @@ import logging
 
 logging.basicConfig(level=logging.WARNING)
 cal_freeze = [200]
+ring_time = datetime.min
 is_refreshing = False
 
 
@@ -19,9 +20,18 @@ def is_computer_on(host="192.168.1.42"):
 
 
 def invert_display():
+    global ring_time
     str_time = str(datetime.now().time())
     is_sleep_time = not '05:30:00.000000' < str_time < '23:00:00.000000'
     is_night_time = not '08:00:00.000000' < str_time < '20:00:00.000000'
+    programs_at = system_commands.list_program_at()
+    if ring_time > datetime.now() + timedelta(minutes=60):
+        if programs_at:
+            ring_time = system_commands.list_program_at()[0][8]
+        else:
+            ring_time = datetime.min
+    if ring_time > datetime.now() - timedelta(minutes=25):
+        return False
     if is_sleep_time or (is_night_time and not is_computer_on()):
         return True
     else:
